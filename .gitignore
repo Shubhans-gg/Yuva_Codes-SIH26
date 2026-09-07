@@ -1,0 +1,13 @@
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+smartprocure.db
+
+# Environment & Secrets
+.env
+
+# Python runtime artifacts
+__pycache__/
+*.pyc
+venv/
