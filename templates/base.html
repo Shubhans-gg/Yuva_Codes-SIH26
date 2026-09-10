@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <title>{% block title %}SMARTPROCURE | Digital Procurement Platform{% endblock %}</title>
+  <meta name="description"
+    content="Digital scheduling, queue & procurement status platform for farmers. Smart India Hackathon 2026 - Problem Statement 26032. Ministry of Consumer Affairs, Food & Public Distribution.">
+  <meta name="theme-color" content="#064e3b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+
+  <!-- Top Gov Tricolor Strip -->
+  <div class="gov-strip"></div>
+
+  <!-- Network Connection Status Banner for Spotty Rural Connectivity -->
+  <div id="network-status-banner" class="network-status-banner" style="display:none;" role="alert">
+    <span id="network-status-icon">⚠️</span>
+    <span id="network-status-text">Low/Spotty Network: Working in offline resilient mode</span>
+  </div>
+
+  <!-- Main Top Navigation -->
+  <header class="top-nav {% block nav_class %}{% endblock %}">
+    <div class="nav-container">
+      <div class="brand-wrapper">
+        <a href="/" class="emblem-badge" title="SmartProcure Home">🌾</a>
+        <div class="brand-text">
+          <h1>
+            SMART<span class="highlight">PROCURE</span>
+            <span class="sih-badge">SIH 2026 • PS 26032</span>
+          </h1>
+          <p class="gov-sub-label">Ministry of Consumer Affairs, Food & Public Distribution • DoCA | Team Yuva Codes</p>
+        </div>
+      </div>
+
+      <nav class="nav-actions">
+        {% block nav_links %}
+        <a href="/" class="btn-nav-link {% if request.path == '/' %}active{% else %}inactive{% endif %}">
+          🏠 Home
+        </a>
+        <a href="/farmer/login"
+          class="btn-nav-link {% if '/farmer' in request.path %}active{% else %}inactive{% endif %}">
+          👨‍🌾 Farmer Portal
+        </a>
+        <a href="/admin/login"
+          class="btn-nav-link {% if '/admin' in request.path %}active{% else %}inactive{% endif %}">
+          🏢 Admin Panel
+        </a>
+        <a href="/display" class="btn-nav-link {% if request.path == '/display' %}active{% else %}inactive{% endif %}">
+          📺 Live Queue
+        </a>
+        {% endblock %}
+
+        <button id="lang-toggle-btn" class="lang-btn" title="Toggle Language" aria-label="Toggle Language">
+          🇮🇳 <span>हिंदी</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Page Content Block -->
+  <main class="main-content-area">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Mobile-First Sticky Bottom Navigation Bar (Visible on mobile screens) -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Quick Access Mobile Navigation">
+    <a href="/" class="mobile-nav-item {% if request.path == '/' %}active{% endif %}" id="mob-nav-home">
+      <span class="mob-nav-icon">🏠</span>
+      <span class="mob-nav-label" data-i18n="mob_nav_home">Home</span>
+    </a>
+    <a href="/farmer/dashboard" class="mobile-nav-item {% if request.path == '/farmer/dashboard' %}active{% endif %}"
+      id="mob-nav-book">
+      <span class="mob-nav-icon">🎫</span>
+      <span class="mob-nav-label" data-i18n="mob_nav_book">Book Slot</span>
+    </a>
+    <a href="/display" class="mobile-nav-item {% if request.path == '/display' %}active{% endif %}" id="mob-nav-queue">
+      <span class="mob-nav-icon">📺</span>
+      <span class="mob-nav-label" data-i18n="mob_nav_queue">Live Queue</span>
+    </a>
+    <button type="button" class="mobile-nav-item" id="mob-nav-sms" onclick="SMSDrawer.open()"
+      aria-label="Open SMS alerts">
+      <span class="mob-nav-icon">
+        💬
+        <span id="sms-badge-count-mob" class="sms-badge-count-mob" style="display: none;">0</span>
+      </span>
+      <span class="mob-nav-label" data-i18n="mob_nav_sms">SMS Alerts</span>
+    </button>
+    <button type="button" class="mobile-nav-item" id="mob-nav-lang" onclick="toggleLanguage()"
+      aria-label="Change Language">
+      <span class="mob-nav-icon">🌐</span>
+      <span class="mob-nav-label" id="mob-lang-label">हिंदी</span>
+    </button>
+  </nav>
+
+  <!-- Floating SMS Inbox Button (Desktop & Tablet) -->
+  {% block sms_button %}
+  <button id="floating-sms-btn" class="floating-sms-btn" title="Open Official SMS Notifications"
+    aria-label="Open SMS Notifications">
+    💬 <span>Farmer SMS Inbox</span>
+    <span id="sms-badge-count" class="sms-badge-count" style="display: none;">0</span>
+  </button>
+
+  <!-- Mobile Bottom-Sheet & Desktop Drawer Modal for Official SMS -->
+  <div id="sms-drawer-backdrop" class="sms-drawer-backdrop" role="dialog" aria-modal="true"
+    aria-labelledby="sms-sheet-title">
+    <div class="sms-phone-container">
+      <!-- Mobile Pull / Swipe Handle -->
+      <div class="sms-sheet-handle"></div>
+
+      <div class="sms-phone-header">
+        <div class="sms-phone-title">
+          <div style="font-size: 1.3rem;">📱</div>
+          <div>
+            <h3 id="sms-sheet-title">Official SMS Alerts</h3>
+            <p>DoCA SmartProcure Gateway • Free Farmer Alerts</p>
+          </div>
+        </div>
+        <button id="sms-close-btn" class="sms-close-btn" aria-label="Close SMS Drawer">&times;</button>
+      </div>
+      <div id="sms-phone-body" class="sms-phone-body"></div>
+    </div>
+  </div>
+  {% endblock %}
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" role="status" aria-live="polite"></div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-container">
+      <div>
+        <p class="footer-credits">
+          <strong>SMARTPROCURE</strong> — Digital Procurement Queue & Status Platform for Indian Farmers
+        </p>
+        <p style="font-size: 0.72rem; margin-top: 0.25rem;">
+          Smart India Hackathon 2026 • Problem Statement ID: 26032 • Department of Consumer Affairs (DoCA)
+        </p>
+      </div>
+      <div>
+        <p style="font-size: 0.75rem;">
+          Designed & Built by <strong>Yuva Codes</strong> • Tech: Flask + Leaflet.js + Vanilla JS
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Supabase JS Client for Realtime & Storage -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SUPABASE_CONFIG = {
+      url: "{{ config.SUPABASE_URL }}",
+      key: "{{ config.SUPABASE_KEY }}"
+    };
+    if (window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key && window.supabase) {
+      window.supabaseClient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.key);
+    }
+  </script>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>

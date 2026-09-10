@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Procurement Receipt (J-Form) | {{ r.receipt_number }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 2rem 1rem;
+      margin: 0;
+    }
+
+    .receipt-page {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border-radius: 8px;
+      padding: 2.5rem;
+      position: relative;
+    }
+
+    .receipt-header {
+      text-align: center;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .gov-heading {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #065f46;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .receipt-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0.25rem 0;
+    }
+
+    .sub-head {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .meta-item {
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .meta-label {
+      color: #64748b;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .meta-value {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+    }
+
+    .data-table th {
+      background: #0f172a;
+      color: white;
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    .data-table td {
+      padding: 0.75rem 0.85rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .total-row {
+      background: #ecfdf5;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #065f46;
+    }
+
+    .dbt-box {
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .signature-area {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed #cbd5e1;
+    }
+
+    .sign-box {
+      text-align: center;
+    }
+
+    .sign-line {
+      width: 180px;
+      border-bottom: 1px solid #0f172a;
+      margin-bottom: 0.35rem;
+    }
+
+    .print-bar {
+      max-width: 800px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 0.75rem 0.5rem 5rem; }
+      .receipt-page { padding: 1.25rem 0.85rem; border-radius: 0.75rem; }
+      .meta-grid { grid-template-columns: 1fr; gap: 0.75rem; padding: 0.85rem; }
+      .gov-heading { font-size: 0.85rem; }
+      .receipt-title { font-size: 1.25rem; }
+      .print-bar { flex-direction: column; gap: 0.5rem; align-items: stretch; }
+      .print-bar a, .print-bar button { text-align: center; justify-content: center; }
+      .signature-area { flex-direction: column; gap: 1.5rem; align-items: center; text-align: center; }
+    }
+
+    @media (max-width: 600px) {
+      .data-table, .data-table thead, .data-table tbody, .data-table th, .data-table td, .data-table tr {
+        display: block;
+      }
+      .data-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+      .data-table tr {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        padding: 0.6rem;
+        background: #f8fafc;
+      }
+      .data-table td {
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.4rem 0.2rem;
+        font-size: 0.82rem;
+        border-bottom: 1px dashed #e2e8f0;
+      }
+      .data-table td:last-child {
+        border-bottom: none;
+      }
+      .data-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        margin-right: 0.5rem;
+      }
+      .data-table tr.total-row {
+        background: #ecfdf5;
+        border: 2px solid #86efac;
+      }
+      .data-table tr.total-row td {
+        font-size: 1rem;
+      }
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .print-bar { display: none; }
+      .receipt-page { box-shadow: none; border: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-bar">
+    <a href="/farmer/dashboard" style="color: #059669; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem;">
+      ← Return to Farmer Portal
+    </a>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <button type="button" onclick="shareReceiptWhatsApp()" style="background: #25d366; color: white; border: none; padding: 0.65rem 1.15rem; border-radius: 6px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 44px;">
+        <span>📲</span> Share on WhatsApp
+      </button>
+      <button type="button" onclick="window.print()" style="background: #059669; color: white; border: none; padding: 0.65rem 1.15rem; border-radius: 6px; font-weight: 700; cursor: pointer; min-height: 44px;">
+        🖨️ Print / Save as PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="receipt-page">
+    <div class="receipt-header">
+      <div class="gov-heading">Government of India • Ministry of Consumer Affairs, Food & Public Distribution</div>
+      <div class="receipt-title">Mandi Procurement & Sale Slip (J-Form)</div>
+      <div class="sub-head">Smart India Hackathon 2026 • Problem Statement ID: 26032 • DoCA Digital Record</div>
+      <div style="margin-top: 0.5rem; font-weight: 800; color: #2563eb; font-size: 1.1rem;">
+        Receipt No: {{ r.receipt_number }}
+      </div>
+    </div>
+
+    <div class="meta-grid">
+      <div>
+        <div class="meta-item">
+          <div class="meta-label">Procurement Centre</div>
+          <div class="meta-value">{{ r.centre_name }} ({{ r.centre_code }})</div>
+          <small style="color: #64748b;">{{ r.centre_address }}</small>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Digital Token Number</div>
+          <div class="meta-value" style="color: #059669; font-size: 1.1rem;">{{ r.token_number }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Booking Date & Slot</div>
+          <div class="meta-value">{{ r.booking_date }} ({{ r.time_slot }})</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="meta-item">
+          <div class="meta-label">Farmer Name</div>
+          <div class="meta-value">{{ r.farmer_name }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Kisan ID & Phone</div>
+          <div class="meta-value">{{ r.kisan_id }} • +91 {{ r.farmer_phone }}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Address</div>
+          <div class="meta-value">{{ r.village }}, {{ r.farmer_district }}, {{ r.farmer_state }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weighment & Quality Details Table -->
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Inspection Parameter</th>
+          <th>Weight / Unit</th>
+          <th>Rate / Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="Description"><strong>Commodity / Crop</strong></td>
+          <td data-label="Parameter">{{ r.crop_name }} ({{ r.crop_hindi }}) - {{ r.crop_category }}</td>
+          <td data-label="Vehicle">Vehicle: {{ r.vehicle_number }}</td>
+          <td data-label="Base Rate">Base MSP: ₹ {{ "%.2f"|format(r.base_msp_per_quintal) }} / Qtl</td>
+        </tr>
+        <tr>
+          <td data-label="Description">Gross Vehicle Weight</td>
+          <td data-label="Parameter">Digital Weighbridge</td>
+          <td data-label="Gross Weight">{{ "%.1f"|format(r.gross_weight_kg) }} kg</td>
+          <td data-label="Rate">--</td>
+        </tr>
+        <tr>
+          <td data-label="Description">Tare / Empty Weight</td>
+          <td data-label="Parameter">Empty Vehicle Measurement</td>
+          <td data-label="Tare Weight">{{ "%.1f"|format(r.tare_weight_kg) }} kg</td>
+          <td data-label="Rate">--</td>
+        </tr>
+        <tr>
+          <td data-label="Description"><strong>Net Produce Weight</strong></td>
+          <td data-label="Parameter"><strong>Net Procured Quantity</strong></td>
+          <td data-label="Net Weight"><strong>{{ "%.3f"|format(r.net_weight_quintals) }} Qtl ({{ "%.1f"|format(r.net_weight_kg) }} kg)</strong></td>
+          <td data-label="Rate">--</td>
+        </tr>
+        <tr>
+          <td data-label="Description">Quality Grade Assessment</td>
+          <td data-label="Parameter">{{ r.quality_grade }}</td>
+          <td data-label="Moisture">Moisture: <strong>{{ "%.1f"|format(r.moisture_percentage) }}%</strong></td>
+          <td data-label="Bonus/Penalty">
+            {% if r.grade_bonus_per_quintal > 0 %}
+              <span style="color: #059669;">+ ₹ {{ "%.2f"|format(r.grade_bonus_per_quintal) }} (Grade A Bonus)</span>
+            {% endif %}
+            {% if r.moisture_penalty_per_quintal > 0 %}
+              <span style="color: #dc2626;">- ₹ {{ "%.2f"|format(r.moisture_penalty_per_quintal) }} (Moisture deduction)</span>
+            {% endif %}
+            {% if r.grade_bonus_per_quintal == 0 and r.moisture_penalty_per_quintal == 0 %}
+              Standard Rate Applied
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td data-label="Description"><strong>Effective Procured Rate</strong></td>
+          <td data-label="Parameter">Calculated Final MSP / Quintal</td>
+          <td data-label="Weight">--</td>
+          <td data-label="Final Rate"><strong>₹ {{ "%.2f"|format(r.effective_rate_per_quintal) }} / Quintal</strong></td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3" data-label="Settlement"><strong>TOTAL PAYABLE AMOUNT (DIRECT BENEFIT TRANSFER)</strong></td>
+          <td data-label="Total Amount"><strong>₹ {{ "{:,.2f}".format(r.total_payable_amount) }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Direct Benefit Transfer (DBT) Status Box -->
+    <div class="dbt-box">
+      <div style="font-weight: 800; color: #166534; font-size: 0.95rem; margin-bottom: 0.35rem;">
+        💳 Direct Benefit Transfer (DBT / PFMS) Settlement Details
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.82rem; color: #15803d;">
+        <div>Bank Name: <strong>{{ r.bank_name or 'State Bank of India' }}</strong></div>
+        <div>A/C Number: <strong>{{ r.bank_account_no }}</strong> (IFSC: {{ r.bank_ifsc }})</div>
+        <div>Payment Status: <strong>{{ r.payment_status|upper }}</strong></div>
+        <div>PFMS Ref / UTR: <strong>{{ r.dbt_reference_utr or 'PFMS' ~ r.receipt_number }}</strong></div>
+      </div>
+    </div>
+
+    <!-- Attached Weighbridge Slip / Document from Supabase Storage -->
+    {% if r.document_url %}
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #334155;">
+        <span>📸</span>
+        <span><strong>Weighbridge & Quality Verification Slip:</strong> Stored in Supabase Storage</span>
+      </div>
+      <a href="{{ r.document_url }}" target="_blank" style="background: #0284c7; color: white; text-decoration: none; padding: 0.3rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">
+        📄 View Document &nearr;
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- Signatures -->
+    <div class="signature-area">
+      <div class="sign-box">
+        <div class="sign-line"></div>
+        <small style="color: #64748b;">Farmer Signature / Biometric</small>
+        <div style="font-weight: 700; font-size: 0.85rem;">{{ r.farmer_name }}</div>
+      </div>
+
+      <div style="text-align: center; color: #64748b; font-size: 0.75rem;">
+        <div style="border: 1px solid #cbd5e1; padding: 0.5rem; border-radius: 4px; display: inline-block; background: #f8fafc;">
+          🔒 Digitally Verified & Timestamped<br>
+          <strong>{{ r.created_at }}</strong>
+        </div>
+      </div>
+
+      <div class="sign-box">
+        <div class="sign-line"></div>
+        <small style="color: #64748b;">Procurement Officer In-Charge</small>
+        <div style="font-weight: 700; font-size: 0.85rem;">{{ r.verified_by }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function shareReceiptWhatsApp() {
+      const msg = [
+        '🌾 *SmartProcure Official J-Form Receipt*',
+        '━━━━━━━━━━━━━━━━━━━━',
+        '📄 *Receipt No:* {{ r.receipt_number }}',
+        '🧑‍🌾 *Farmer:* {{ r.farmer_name }}',
+        '🌾 *Crop:* {{ r.crop_name }} ({{ r.crop_hindi }})',
+        '⚖️ *Net Quantity:* {{ "%.3f"|format(r.net_weight_quintals) }} Quintals',
+        '💰 *Total DBT Amount:* ₹{{ "{:,.2f}".format(r.total_payable_amount) }}',
+        '🏢 *Mandi Centre:* {{ r.centre_name }}',
+        '💳 *DBT Reference / UTR:* {{ r.dbt_reference_utr or "PFMS-CONFIRMED" }}',
+        '━━━━━━━━━━━━━━━━━━━━',
+        'Official Verification Link: ' + window.location.href
+      ].join('\n');
+
+      const url = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(msg);
+      window.open(url, '_blank');
+    }
+  </script>
+
+</body>
+</html>

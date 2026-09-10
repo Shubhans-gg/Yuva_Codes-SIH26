@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Farmer Dashboard | SmartProcure{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/farmer.css') }}">
+{% endblock %}
+
+{% block nav_links %}
+<a href="/" class="btn-nav-link inactive">🏠 Home</a>
+<span class="btn-nav-link active">👨‍🌾 My Dashboard</span>
+<a href="/display" class="btn-nav-link inactive">📺 Live Queue</a>
+{% endblock %}
+
+{% block sms_button %}
+<button id="floating-sms-btn" class="floating-sms-btn" title="Open Official SMS Notifications">
+  💬 <span>SMS Inbox</span>
+  <span id="sms-badge-count" class="sms-badge-count" style="display: none;">0</span>
+</button>
+<div id="sms-drawer-backdrop" class="sms-drawer-backdrop">
+  <div class="sms-phone-container">
+    <div class="sms-phone-header">
+      <div class="sms-phone-title">
+        <div style="font-size: 1.3rem;">📱</div>
+        <div><h3>Official SMS Alerts</h3><p>DoCA SmartProcure Gateway</p></div>
+      </div>
+      <button id="sms-close-btn" class="sms-close-btn">&times;</button>
+    </div>
+    <div id="sms-phone-body" class="sms-phone-body"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+
+  <!-- Dashboard Header with farmer info -->
+  <div class="dashboard-header">
+    <div class="dashboard-header-inner">
+      <div class="farmer-greeting">
+        <div class="farmer-avatar">🧑‍🌾</div>
+        <div>
+          <div class="farmer-name-display" id="dash-farmer-name">Loading...</div>
+          <div class="farmer-kisan-id" id="dash-kisan-id">KISAN-ID: --</div>
+          <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem;" id="dash-district"></div>
+        </div>
+      </div>
+      <div class="dashboard-header-actions">
+        <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.35); color: #4ade80; font-size: 0.72rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 0.4rem;">
+          <span class="live-pulse"></span>
+          <span>⚡ Supabase Realtime</span>
+        </div>
+        <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; font-size: 0.72rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 0.4rem;" id="dash-phone-badge"></div>
+        <a href="/farmer/login" class="btn-logout" onclick="logoutFarmer(event)">🚪 Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="dashboard-tabs-nav">
+    <div class="tabs-nav-inner">
+      <button class="dashboard-tab-btn active" onclick="switchTab('book')" id="tab-btn-book">
+        🎫 Book a Slot
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchTab('bookings')" id="tab-btn-bookings">
+        📋 My Bookings
+        <span class="tab-badge" id="bookings-count-badge" style="display:none;"></span>
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchTab('track')" id="tab-btn-track">
+        📍 Track Progress
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchTab('payment')" id="tab-btn-payment">
+        💳 Payment Status
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchTab('profile')" id="tab-btn-profile">
+        👤 My Profile
+      </button>
+    </div>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-content">
+
+    <!-- Summary Cards -->
+    <div class="summary-cards-row" id="dash-summary-row">
+      <div class="summary-card">
+        <div class="summary-card-icon green">🎫</div>
+        <div>
+          <div class="summary-card-value" id="sum-total-bookings">--</div>
+          <div class="summary-card-label">Total Bookings</div>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-icon blue">⚖️</div>
+        <div>
+          <div class="summary-card-value" id="sum-total-qty">--</div>
+          <div class="summary-card-label">Quintals Procured</div>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-icon amber">💰</div>
+        <div>
+          <div class="summary-card-value" id="sum-total-payment">--</div>
+          <div class="summary-card-label">Total Received</div>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-icon purple">📊</div>
+        <div>
+          <div class="summary-card-value" id="sum-active-token">--</div>
+          <div class="summary-card-label">Active Token</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 1: BOOK A SLOT                                          -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel active" id="panel-book">
+      <div class="slot-booking-layout">
+        <!-- Left: Booking Form -->
+        <div class="booking-form-card">
+          <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            🎫 Book Procurement Slot
+          </h3>
+
+          <div class="form-group">
+            <label class="form-label">🏢 Select Procurement Centre</label>
+            <select id="book-centre-select" class="form-control" onchange="loadSlots()">
+              {% for c in centres %}
+              <option value="{{ c.id }}" data-lat="{{ c.latitude }}" data-lng="{{ c.longitude }}">
+                {{ c.name }} — {{ c.district }}, {{ c.state }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">🌾 Crop / Commodity</label>
+              <select id="book-crop-select" class="form-control" onchange="updateMSPPreview()">
+                {% for crop in crops %}
+                <option value="{{ crop.id }}" data-msp="{{ crop.msp_rate_per_quintal }}" data-moisture="{{ crop.max_moisture_percentage }}">
+                  {{ crop.crop_name }} ({{ crop.hindi_name }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">📅 Delivery Date</label>
+              <input type="date" id="book-date-input" class="form-control" onchange="loadSlots()">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="display: flex; justify-content: space-between;">
+              <span>⏰ Select Time Slot</span>
+              <span style="font-size: 0.72rem; color: #94a3b8;">Click to select your preferred arrival window</span>
+            </label>
+            <div id="slots-grid-container" class="slot-grid">
+              <div style="text-align:center; padding: 1rem; color: #94a3b8; font-size: 0.85rem;">
+                ⏳ Loading available slots...
+              </div>
+            </div>
+          </div>
+
+          <div class="booking-inputs-grid">
+            <div class="form-group">
+              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>⚖️ Quantity (Quintals)</span>
+                <span style="font-size: 0.75rem; color: #15803d; font-weight: 700;" id="preview-kg-sub">4,000 kg</span>
+              </label>
+              <div class="qty-stepper-row">
+                <button type="button" class="btn-qty-step" onclick="adjustBookingQty(-5)" aria-label="Subtract 5 quintals">- 5 Qtl</button>
+                <input type="number" id="book-qty-input" class="form-control qty-input-field" placeholder="40" value="40" min="1" max="1000" step="1" inputmode="numeric" oninput="updateMSPPreview()">
+                <button type="button" class="btn-qty-step" onclick="adjustBookingQty(5)" aria-label="Add 5 quintals">+ 5 Qtl</button>
+              </div>
+              <div class="quick-qty-chips">
+                <button type="button" class="chip-qty" onclick="setBookingQty(20)">20 Qtl</button>
+                <button type="button" class="chip-qty" onclick="setBookingQty(40)">40 Qtl</button>
+                <button type="button" class="chip-qty" onclick="setBookingQty(60)">60 Qtl</button>
+                <button type="button" class="chip-qty" onclick="setBookingQty(100)">100 Qtl</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">🚜 Vehicle / Transport</label>
+              <input type="text" id="book-vehicle-input" class="form-control" placeholder="e.g. HR-05-AB-1234" value="TRACTOR-TROLLEY">
+              <div class="vehicle-quick-tags">
+                <button type="button" class="chip-vehicle" onclick="setVehicle('TRACTOR-TROLLEY')">🚜 Tractor</button>
+                <button type="button" class="chip-vehicle" onclick="setVehicle('PICKUP')">🛻 Pickup</button>
+                <button type="button" class="chip-vehicle" onclick="setVehicle('TRUCK')">🚛 Truck</button>
+              </div>
+            </div>
+          </div>
+
+          <button id="btn-confirm-booking" class="btn btn-primary" style="width:100%; font-size: 1.05rem; padding: 0.95rem; min-height: 52px; margin-top: 0.5rem;" onclick="confirmBooking()">
+            🎫 Confirm Slot & Generate Digital Token
+          </button>
+        </div>
+
+        <!-- Right: Booking Summary -->
+        <div class="booking-summary-card">
+          <div class="booking-summary-title">📋 Booking Preview</div>
+
+          <div class="booking-summary-row">
+            <span>Centre</span>
+            <span id="preview-centre" style="max-width: 180px; text-align: right; font-size: 0.82rem;">—</span>
+          </div>
+          <div class="booking-summary-row">
+            <span>Crop</span>
+            <span id="preview-crop">—</span>
+          </div>
+          <div class="booking-summary-row">
+            <span>Date</span>
+            <span id="preview-date">—</span>
+          </div>
+          <div class="booking-summary-row">
+            <span>Time Slot</span>
+            <span id="preview-slot" style="color: #4ade80;">—</span>
+          </div>
+          <div class="booking-summary-row">
+            <span>Quantity</span>
+            <span id="preview-qty">—</span>
+          </div>
+
+          <div class="msp-highlight-box">
+            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem;">2026 MSP RATE</div>
+            <div class="msp-highlight-rate" id="preview-msp">₹2,425</div>
+            <div class="msp-highlight-label">per Quintal</div>
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);">
+              <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">ESTIMATED TOTAL</div>
+              <div style="font-size: 1.4rem; font-weight: 900; color: white; margin-top: 0.2rem;" id="preview-total">₹—</div>
+            </div>
+          </div>
+
+          <!-- Token Display (shown after booking) -->
+          <div id="token-success-display" style="display:none; margin-top: 1.25rem;">
+            <div style="background: linear-gradient(135deg, #4ade80, #22d3ee); border-radius: 0.75rem; padding: 1.25rem; text-align: center; color: #0f172a;">
+              <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem;">Your Token Number</div>
+              <div style="font-size: 1.6rem; font-weight: 900; font-family: monospace; letter-spacing: 0.05em;" id="new-token-display"></div>
+              <div style="font-size: 0.75rem; margin-top: 0.4rem; opacity: 0.7;">Show this to Mandi gate staff</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 2: MY BOOKINGS                                          -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="panel-bookings">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a;">📋 My Booking History</h3>
+        <button class="btn btn-secondary btn-sm" onclick="loadMyBookings()">🔄 Refresh</button>
+      </div>
+      <div class="bookings-list" id="bookings-list-container">
+        <div class="empty-state">
+          <span class="empty-state-icon">🎫</span>
+          <div class="empty-state-title">No Bookings Yet</div>
+          <div class="empty-state-desc">Your confirmed slot bookings will appear here. Book your first slot to get started.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 3: TRACK PROGRESS                                       -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="panel-track">
+      <div class="track-container">
+
+        <div class="track-search-box">
+          <div style="flex: 1; min-width: 200px;">
+            <label class="form-label">Token Number or Mobile</label>
+            <input type="text" id="track-token-input" class="form-control" placeholder="e.g. DOCA-26-P001">
+          </div>
+          <button class="btn btn-primary" onclick="trackToken()">🔍 Track Status</button>
+        </div>
+
+        <div id="track-result-container">
+          <div class="empty-state">
+            <span class="empty-state-icon">📍</span>
+            <div class="empty-state-title">Enter Your Token to Track</div>
+            <div class="empty-state-desc">Enter your booking token number above to see real-time progress through all stages</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 4: PAYMENT STATUS                                       -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="panel-payment">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a;">💳 Payment & DBT Status</h3>
+        <button class="btn btn-secondary btn-sm" onclick="loadPaymentStatus()">🔄 Refresh</button>
+      </div>
+      <div id="payment-cards-container">
+        <div class="empty-state">
+          <span class="empty-state-icon">💳</span>
+          <div class="empty-state-title">No Payment Records Yet</div>
+          <div class="empty-state-desc">Payment details will appear here once your produce is weighed and quality-checked at the Mandi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 5: PROFILE                                              -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="panel-profile">
+      <div class="profile-card">
+        <div class="profile-avatar-section">
+          <div class="profile-avatar-lg">🧑‍🌾</div>
+          <div>
+            <div class="profile-name" id="profile-name">--</div>
+            <div class="profile-kisan" id="profile-kisan-id">--</div>
+            <div class="profile-joined" id="profile-joined">Registered: --</div>
+          </div>
+        </div>
+
+        <div class="profile-fields-grid">
+          <div class="profile-field">
+            <div class="field-label">📱 Mobile</div>
+            <div class="field-value" id="profile-phone">--</div>
+          </div>
+          <div class="profile-field">
+            <div class="field-label">🪪 Aadhaar</div>
+            <div class="field-value" id="profile-aadhaar">--</div>
+          </div>
+          <div class="profile-field">
+            <div class="field-label">🗺 State</div>
+            <div class="field-value" id="profile-state">--</div>
+          </div>
+          <div class="profile-field">
+            <div class="field-label">📍 District / Village</div>
+            <div class="field-value" id="profile-location">--</div>
+          </div>
+          <div class="profile-field">
+            <div class="field-label">🏦 Bank Account</div>
+            <div class="field-value" id="profile-bank-acc">--</div>
+          </div>
+          <div class="profile-field">
+            <div class="field-label">🔑 IFSC / Bank</div>
+            <div class="field-value" id="profile-ifsc">--</div>
+          </div>
+          <div class="profile-field">
+            <div class="field-label">💸 UPI ID</div>
+            <div class="field-value" id="profile-upi">--</div>
+          </div>
+          <div class="profile-field" style="grid-column: 1/-1;">
+            <div class="field-label">📁 Verification Document (Supabase Storage)</div>
+            <div class="field-value" id="profile-doc-link">--</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #f1f5f9; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <a href="/farmer/login" class="btn btn-secondary btn-sm" onclick="logoutFarmer(event)">
+            🚪 Logout
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.dashboard-content -->
+</div><!-- /.dashboard-page -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/farmer_dashboard.js') }}"></script>
+{% endblock %}

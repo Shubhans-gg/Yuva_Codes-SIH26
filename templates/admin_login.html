@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login | SmartProcure{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+<style>
+  .quick-demo-box-admin {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-top: 1.25rem;
+  }
+  .btn-demo-admin {
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    color: #93c5fd;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+  .btn-demo-admin:hover {
+    background: rgba(37, 99, 235, 0.28);
+    border-color: #60a5fa;
+    transform: translateY(-1px);
+  }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+<a href="/" class="btn-nav-link inactive">🏠 Home</a>
+<a href="/farmer/login" class="btn-nav-link inactive">👨‍🌾 Farmer</a>
+<a href="/admin/login" class="btn-nav-link active">🏢 Admin Login</a>
+{% endblock %}
+
+{% block sms_button %}{% endblock %}
+
+{% block content %}
+<div class="auth-page admin-auth-page">
+  <div class="auth-wrapper">
+
+    <div class="auth-logo-strip">
+      <div class="brand-name">SMART<span class="highlight">PROCURE</span></div>
+      <div class="brand-sub">Centre Operator & Admin Portal • Restricted Access</div>
+    </div>
+
+    <div class="auth-card admin-auth-card">
+      <div class="auth-card-header">
+        <span class="admin-badge">🔒 Supabase Auth • Role Protected</span>
+        <span class="auth-card-icon">🏢</span>
+        <div class="auth-card-title">Operator Login</div>
+        <div class="auth-card-subtitle">
+          Sign in with your DoCA-issued operator credentials or Supabase Auth to manage queues and weighbridges
+        </div>
+      </div>
+
+      <form id="admin-login-form" onsubmit="submitAdminLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Username / Email</label>
+          <input type="text" id="admin-username" class="form-control" placeholder="e.g. karnal_op"
+                 value="karnal_op" autocomplete="username" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="admin-password" class="form-control" placeholder="••••••••"
+                   value="op@karnal" autocomplete="current-password" required>
+            <button type="button" class="password-toggle" onclick="togglePassword()">👁</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem; background: linear-gradient(135deg, #1d4ed8, #3b82f6);" id="btn-admin-login">
+          🔐 Login to Admin Panel
+        </button>
+      </form>
+
+      <!-- 1-Click Fast Logins for SIH Evaluators -->
+      <div class="quick-demo-box-admin">
+        <div style="font-size:0.75rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.6rem;">
+          ⚡ 1-Click Demo Operator Logins
+        </div>
+        <button type="button" class="btn-demo-admin" onclick="quickAdminLogin('karnal_op', 'op@karnal', 'karnal.op@smartprocure.in', 'operator123')">
+          <span>🏢 <strong>Karnal Mandi Officer</strong> (S. K. Sharma)</span>
+          <span style="font-size:0.72rem; opacity:0.8;">1-Click &rarr;</span>
+        </button>
+        <button type="button" class="btn-demo-admin" onclick="quickAdminLogin('ludhiana_op', 'op@ludhiana', 'ludhiana.op@smartprocure.in', 'operator123')">
+          <span>🏢 <strong>Ludhiana Mandi Officer</strong> (Gurpreet Singh)</span>
+          <span style="font-size:0.72rem; opacity:0.8;">1-Click &rarr;</span>
+        </button>
+        <button type="button" class="btn-demo-admin" onclick="quickAdminLogin('admin', 'admin123', 'admin@smartprocure.in', 'admin123')">
+          <span>🏛️ <strong>DoCA Super Admin</strong> (All Mandis HQ)</span>
+          <span style="font-size:0.72rem; opacity:0.8;">1-Click &rarr;</span>
+        </button>
+      </div>
+
+      <div class="auth-footer-links">
+        Not an admin? <a href="/farmer/login">Farmer Login</a>
+        &nbsp;|&nbsp;
+        <a href="/">← Back to Home</a>
+      </div>
+    </div>
+
+    <!-- Success card -->
+    <div class="auth-card" id="admin-success-card" style="display:none; text-align:center;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+      <div class="auth-card-title">Login Successful!</div>
+      <div style="margin-top: 0.75rem; font-size: 0.9rem; color: #64748b;" id="admin-welcome-msg"></div>
+      <div style="margin-top: 1.5rem;">
+        <div style="width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;"></div>
+      </div>
+      <div style="margin-top: 1rem; font-size: 0.82rem; color: #94a3b8;">Redirecting to dashboard...</div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+.auth-body { background: #0f172a; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const session = localStorage.getItem('smartprocure_admin');
+    if (session) window.location.href = '/admin/dashboard';
+  });
+
+  function togglePassword() {
+    const pw = document.getElementById('admin-password');
+    pw.type = pw.type === 'password' ? 'text' : 'password';
+  }
+
+  async function quickAdminLogin(user, pass, email, authPass) {
+    showToast(`Authenticating ${user}...`, 'info');
+    
+    // 1. Authenticate with Supabase Auth
+    try {
+      await SupabaseAuth.signInWithPassword(email, authPass);
+    } catch(e) {
+      console.warn('Supabase admin auth note:', e);
+    }
+
+    // 2. Fetch admin session from API
+    try {
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username: user, password: pass})
+      });
+      const data = await res.json();
+      if (data.success && data.admin) {
+        localStorage.setItem('smartprocure_admin', JSON.stringify(data.admin));
+        document.getElementById('admin-login-form').style.display = 'none';
+        document.getElementById('admin-success-card').style.display = '';
+        document.getElementById('admin-welcome-msg').textContent =
+          `Welcome, ${data.admin.full_name}! (${data.admin.role.toUpperCase()})`;
+        setTimeout(() => window.location.href = '/admin/dashboard', 800);
+      } else {
+        showToast(data.error || 'Login failed', 'error');
+      }
+    } catch(ex) {
+      showToast('Network error during quick login.', 'error');
+    }
+  }
+
+  async function submitAdminLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('admin-username').value.trim();
+    const password = document.getElementById('admin-password').value;
+    const btn = document.getElementById('btn-admin-login');
+    btn.disabled = true; btn.textContent = 'Authenticating with Supabase...';
+
+    try {
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('smartprocure_admin', JSON.stringify(data.admin));
+        document.getElementById('admin-login-form').style.display = 'none';
+        document.getElementById('admin-success-card').style.display = '';
+        document.getElementById('admin-welcome-msg').textContent =
+          `Welcome back, ${data.admin.full_name}! (${data.admin.role})`;
+        setTimeout(() => window.location.href = '/admin/dashboard', 1200);
+      } else {
+        showToast(data.error || 'Invalid credentials', 'error');
+        btn.disabled = false; btn.textContent = '🔐 Login to Admin Panel';
+      }
+    } catch(ex) {
+      showToast('Network error. Please try again.', 'error');
+      btn.disabled = false; btn.textContent = '🔐 Login to Admin Panel';
+    }
+  }
+</script>
+{% endblock %}

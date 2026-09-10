@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Farmer Login | SmartProcure{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+<style>
+  .quick-demo-box {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-top: 1.25rem;
+  }
+  .quick-demo-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .demo-btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .btn-demo-account {
+    background: rgba(22, 163, 74, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: #4ade80;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-demo-account:hover {
+    background: rgba(22, 163, 74, 0.28);
+    border-color: #4ade80;
+    transform: translateY(-1px);
+  }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+<a href="/" class="btn-nav-link inactive">🏠 Home</a>
+<a href="/farmer/login" class="btn-nav-link active">👨‍🌾 Farmer Login</a>
+<a href="/admin/login" class="btn-nav-link inactive">🏢 Admin</a>
+{% endblock %}
+
+{% block sms_button %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-wrapper">
+
+    <div class="auth-logo-strip">
+      <div class="brand-name">SMART<span class="highlight">PROCURE</span></div>
+      <div class="brand-sub">Department of Consumer Affairs • Government of India</div>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="auth-steps-indicator" id="steps-indicator">
+      <div class="auth-step-dot active" id="step-dot-1">1</div>
+      <div class="auth-step-line" id="step-line-1"></div>
+      <div class="auth-step-dot" id="step-dot-2">2</div>
+      <div class="auth-step-line" id="step-line-2"></div>
+      <div class="auth-step-dot" id="step-dot-3">✓</div>
+    </div>
+
+    <div class="auth-card" id="auth-main-card">
+      <!-- STEP 1: Enter Phone or Demo Login -->
+      <div class="otp-step" id="login-step-1">
+        <div class="auth-card-header">
+          <span class="auth-card-icon">👨‍🌾</span>
+          <div class="auth-card-title">Farmer Login</div>
+          <div class="auth-card-subtitle">Login with your registered mobile number or Supabase Auth</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mobile Number</label>
+          <div class="otp-input-group">
+            <span class="country-code">+91</span>
+            <input type="tel" id="login-phone" class="form-control" placeholder="9876543210"
+                   maxlength="10" inputmode="numeric" autocomplete="tel">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%; margin-top: 0.5rem;" id="btn-send-otp-login" onclick="sendLoginOTP()">
+          📲 Send OTP / Verify
+        </button>
+
+        <!-- SIH Presentation 1-Click Demo Logins -->
+        <div class="quick-demo-box">
+          <div class="quick-demo-title">⚡ SIH 1-Click Fast Login (Pre-configured)</div>
+          <div class="demo-btn-group">
+            <button type="button" class="btn-demo-account" onclick="quickLogin('9876543210', 'farmer1@smartprocure.in', 'farmer123')">
+              <span>🌾 <strong>Ram Lal Verma</strong> (Karnal, Wheat)</span>
+              <span style="font-size: 0.72rem; opacity: 0.8;">1-Click &rarr;</span>
+            </button>
+            <button type="button" class="btn-demo-account" onclick="quickLogin('9812345678', 'farmer2@smartprocure.in', 'farmer123')">
+              <span>🌾 <strong>Baldev Singh</strong> (Ludhiana, Mustard)</span>
+              <span style="font-size: 0.72rem; opacity: 0.8;">1-Click &rarr;</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-footer-links">
+          New farmer? <a href="/farmer/signup">Create Account & Upload Docs</a>
+          &nbsp;|&nbsp;
+          <a href="/">← Back to Home</a>
+        </div>
+      </div>
+
+      <!-- STEP 2: Enter OTP -->
+      <div class="otp-step" id="login-step-2" style="display:none;">
+        <div class="auth-card-header">
+          <span class="auth-card-icon">🔐</span>
+          <div class="auth-card-title">Enter OTP</div>
+          <div class="auth-card-subtitle" id="otp-sent-msg">OTP sent to your mobile number</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">4-Digit OTP</label>
+          <input type="text" id="login-otp" class="form-control otp-digit-input"
+                 placeholder="1234" maxlength="4" inputmode="numeric">
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;" id="btn-verify-otp-login" onclick="verifyLoginOTP()">
+          ✅ Verify & Login
+        </button>
+
+        <div class="otp-resend">
+          <button onclick="resendOTP()">🔄 Resend OTP</button>
+          &nbsp;|&nbsp;
+          <button onclick="goToStep(1)">← Change Number</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Loading/Success (JS redirects to dashboard) -->
+      <div class="otp-step" id="login-step-3" style="display:none; text-align:center; padding: 2rem 0;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+        <div class="auth-card-title">Login Successful!</div>
+        <div class="auth-card-subtitle" style="margin-top: 0.5rem;">Redirecting to your dashboard...</div>
+        <div style="margin-top: 1.5rem;">
+          <div style="width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #16a34a; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+.auth-body { background: #0f172a; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // If already logged in, redirect
+    const session = localStorage.getItem('smartprocure_farmer');
+    if (session) window.location.href = '/farmer/dashboard';
+  });
+
+  function fillPhone(num) {
+    document.getElementById('login-phone').value = num;
+  }
+
+  function goToStep(n) {
+    [1,2,3].forEach(i => {
+      document.getElementById('login-step-'+i).style.display = 'none';
+      document.getElementById('step-dot-'+i).classList.remove('active','done');
+    });
+    document.getElementById('login-step-'+n).style.display = '';
+    document.getElementById('step-dot-'+n).classList.add('active');
+    for(let i=1; i<n; i++) {
+      document.getElementById('step-dot-'+i).classList.add('done');
+      if(document.getElementById('step-line-'+i))
+        document.getElementById('step-line-'+i).classList.add('done');
+    }
+  }
+
+  async function quickLogin(phone, email, password) {
+    showToast(`Logging in as ${email}...`, 'info');
+    
+    // 1. Authenticate with Supabase Auth client if available
+    try {
+      await SupabaseAuth.signInWithPassword(email, password);
+    } catch(e) {
+      console.warn('Supabase client auth:', e);
+    }
+
+    // 2. Fetch profile from backend
+    try {
+      const token = localStorage.getItem('sb-access-token') || '';
+      const res = await fetch('/api/auth/farmer/login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({phone, email, access_token: token})
+      });
+      const data = await res.json();
+      if (data.success && data.farmer) {
+        localStorage.setItem('smartprocure_farmer', JSON.stringify(data.farmer));
+        goToStep(3);
+        showToast(`Welcome back, ${data.farmer.full_name}!`, 'success');
+        setTimeout(() => window.location.href = '/farmer/dashboard', 800);
+      } else {
+        showToast(data.error || 'Login failed', 'error');
+      }
+    } catch (e) {
+      showToast('Network error during quick login.', 'error');
+    }
+  }
+
+  async function sendLoginOTP() {
+    const phone = document.getElementById('login-phone').value.trim();
+    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+      return showToast('Please enter a valid 10-digit mobile number', 'error');
+    }
+    const btn = document.getElementById('btn-send-otp-login');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({phone})
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('otp-sent-msg').textContent = `OTP sent to +91 ${phone}`;
+        goToStep(2);
+        showToast(data.message, 'success');
+      } else {
+        showToast(data.error || 'Failed to send OTP', 'error');
+      }
+    } catch(e) {
+      showToast('Network error. Please try again.', 'error');
+    }
+    btn.disabled = false; btn.textContent = '📲 Send OTP / Verify';
+  }
+
+  async function verifyLoginOTP() {
+    const phone = document.getElementById('login-phone').value.trim();
+    const otp = document.getElementById('login-otp').value.trim();
+    const btn = document.getElementById('btn-verify-otp-login');
+    btn.disabled = true; btn.textContent = 'Verifying...';
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({phone, otp})
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.is_new) {
+          localStorage.setItem('smartprocure_pending_phone', phone);
+          window.location.href = '/farmer/signup';
+        } else {
+          localStorage.setItem('smartprocure_farmer', JSON.stringify(data.farmer));
+          goToStep(3);
+          setTimeout(() => window.location.href = '/farmer/dashboard', 1000);
+        }
+      } else {
+        showToast(data.error || 'Invalid OTP', 'error');
+      }
+    } catch(e) {
+      showToast('Network error. Please try again.', 'error');
+    }
+    btn.disabled = false; btn.textContent = '✅ Verify & Login';
+  }
+
+  async function resendOTP() {
+    const phone = document.getElementById('login-phone').value.trim();
+    await fetch('/api/auth/send-otp', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({phone})
+    });
+    showToast('OTP resent successfully!', 'success');
+  }
+</script>
+{% endblock %}

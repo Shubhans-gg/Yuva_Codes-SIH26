@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | SmartProcure Centre Operations{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block nav_links %}
+<a href="/" class="btn-nav-link inactive">🏠 Home</a>
+<a href="/display" class="btn-nav-link inactive">📺 Live Queue</a>
+<span class="btn-nav-link active">🏢 Admin Dashboard</span>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+
+  <!-- Admin Dashboard Header -->
+  <div class="dashboard-header" style="background: linear-gradient(135deg, #0f172a, #1e293b);">
+    <div class="dashboard-header-inner">
+      <div class="farmer-greeting">
+        <div class="farmer-avatar" style="background: linear-gradient(135deg, #1d4ed8, #3b82f6);">🏢</div>
+        <div>
+          <div class="farmer-name-display" id="admin-display-name">Centre Operator Dashboard</div>
+          <div class="farmer-kisan-id" id="admin-role-badge">Role: Loading...</div>
+          <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem;" id="admin-centre-display"></div>
+        </div>
+      </div>
+
+      <div class="dashboard-header-actions">
+        <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); color: #93c5fd; font-size: 0.72rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 0.4rem;">
+          <span class="live-pulse" style="background:#3b82f6;"></span>
+          <span>⚡ Supabase Realtime Live</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <label style="font-size: 0.82rem; color: rgba(255,255,255,0.6);">Active Mandi:</label>
+          <select id="admin-centre-select" class="form-control" style="background: #1e293b; color: white; border-color: #334155; width: auto; font-size: 0.82rem; padding: 0.4rem 0.75rem;" onchange="reloadAdminData()">
+            {% for c in centres %}
+            <option value="{{ c.id }}" {% if loop.first %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <a href="/admin/login" class="btn-logout" onclick="logoutAdmin(event)">🚪 Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="dashboard-tabs-nav">
+    <div class="tabs-nav-inner">
+      <button class="dashboard-tab-btn active" onclick="switchAdminTab('operations')" id="admin-tab-btn-operations">
+        ⚡ Live Operations
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchAdminTab('queue')" id="admin-tab-btn-queue">
+        👥 Queue Management
+        <span class="tab-badge" id="admin-queue-count-badge">0</span>
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchAdminTab('weighbridge')" id="admin-tab-btn-weighbridge">
+        ⚖️ Weighbridge
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchAdminTab('status')" id="admin-tab-btn-status">
+        📝 Update Status
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchAdminTab('settlements')" id="admin-tab-btn-settlements">
+        💰 DBT Settlements
+      </button>
+      <button class="dashboard-tab-btn" onclick="switchAdminTab('analytics')" id="admin-tab-btn-analytics">
+        📊 Analytics
+      </button>
+    </div>
+  </div>
+
+  <div class="dashboard-content">
+
+    <!-- Analytics Summary Strip -->
+    <div class="stats-grid" style="margin-bottom: 1.5rem;">
+      <div class="stat-card primary">
+        <div class="stat-icon">👨‍🌾</div>
+        <div class="stat-info">
+          <h3 id="stat-total-farmers">--</h3>
+          <p>Registered Farmers</p>
+        </div>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-icon">🎫</div>
+        <div class="stat-info">
+          <h3 id="stat-total-bookings">--</h3>
+          <p>Scheduled Tokens</p>
+        </div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">⚖️</div>
+        <div class="stat-info">
+          <h3 id="stat-total-quintals">--</h3>
+          <p>Total Procured (Qtl)</p>
+        </div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+          <h3 id="stat-total-payout">--</h3>
+          <p>Payouts Disbursed</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 1: LIVE OPERATIONS (Desks + Quick Call)                  -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel active" id="admin-panel-operations">
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+          <div>
+            <h3>Counter Desks & Live Operator Bays</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Active Mandi inspection lines and weighbridges</p>
+          </div>
+          <button id="btn-call-next-token" class="btn btn-primary" onclick="callNextToken()">
+            📢 Call Next Waiting Farmer
+          </button>
+        </div>
+        <div id="admin-desks-grid" class="desk-grid">
+          <!-- Populated by admin_dashboard.js -->
+        </div>
+      </div>
+
+      <!-- Live Queue Table Preview -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <h3>Live Waiting Queue</h3>
+            <span id="badge-live-queue-count" class="sih-badge" style="font-size: 0.75rem;">0</span>
+          </div>
+          <span style="font-size: 0.75rem; color: #047857; font-weight: 600;">
+            <span class="live-pulse"></span> Auto-Syncing
+          </span>
+        </div>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Token #</th>
+                <th>Farmer</th>
+                <th>Crop</th>
+                <th>Slot</th>
+                <th>Status</th>
+                <th>Queue / Desk</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="live-queue-tbody">
+              <!-- Populated by admin_dashboard.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 2: QUEUE MANAGEMENT (Full Table)                        -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="admin-panel-queue">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+          <h3>Full Queue Management</h3>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="reloadAdminData()">🔄 Refresh Queue</button>
+            <button class="btn btn-primary btn-sm" onclick="callNextToken()">📢 Call Next</button>
+          </div>
+        </div>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Token #</th>
+                <th>Farmer Details</th>
+                <th>Crop</th>
+                <th>Est. Qty</th>
+                <th>Slot</th>
+                <th>Status</th>
+                <th>Check-In</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="full-queue-tbody">
+              <!-- Populated by admin_dashboard.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 3: WEIGHBRIDGE & QUALITY STATION                        -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="admin-panel-weighbridge">
+      <div class="admin-panel-grid">
+        <!-- Left: Weighbridge Form -->
+        <div id="weighbridge-box-container" class="weighbridge-box">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div>
+              <h3>Digital Weighbridge & Quality Station</h3>
+              <p id="weigh-farmer-name" style="font-size: 0.85rem; color: var(--text-muted);">
+                Select a token from Queue Management tab
+              </p>
+            </div>
+            <div style="background: var(--primary-100); color: var(--primary-800); font-weight: 800; padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;" id="weigh-token-display">
+              None Selected
+            </div>
+          </div>
+
+          <form id="weighbridge-procurement-form" onsubmit="recordProcurement(event)">
+            <input type="hidden" id="procurement-token-hidden">
+
+            <div class="scale-display">
+              <div>
+                <span class="scale-label">DIGITAL WEIGHBRIDGE NET WEIGHT</span>
+                <div class="scale-value" id="scale-live-net-kg">0 kg</div>
+              </div>
+              <div style="text-align: right;">
+                <span class="scale-label">STATUS</span>
+                <div style="color: #34d399; font-weight: 700; font-size: 0.9rem;">STABLE SCALE</div>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Gross Vehicle Weight (kg)</label>
+                <input type="number" id="weigh-gross-kg" class="form-control" placeholder="e.g. 5200" value="5200" required oninput="updateScaleDisplay()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tare / Empty Weight (kg)</label>
+                <input type="number" id="weigh-tare-kg" class="form-control" placeholder="e.g. 1200" value="1200" required oninput="updateScaleDisplay()">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Moisture Content (%)</label>
+                <input type="number" id="weigh-moisture-pct" class="form-control" placeholder="e.g. 11.5" value="11.5" step="0.1" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Quality Assessment Grade</label>
+                <select id="weigh-quality-grade" class="form-control">
+                  <option value="Grade A" selected>Grade A (Premium + ₹50 Bonus)</option>
+                  <option value="FAQ">FAQ (Fair Average Quality - Base MSP)</option>
+                  <option value="Standard">Standard Commercial</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Agronomist / Officer Remarks</label>
+              <input type="text" id="weigh-notes" class="form-control" value="Grain quality verified. High purity and optimal moisture.">
+            </div>
+
+            <!-- Supabase Storage Document Attachment -->
+            <div class="form-group">
+              <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>📸 Weighbridge Slip / Quality Photo</span>
+                <span style="background:rgba(34,197,94,0.15); color:#22c55e; font-size:0.7rem; font-weight:700; padding:0.15rem 0.45rem; border-radius:0.3rem;">⚡ Supabase Storage</span>
+              </label>
+              <input type="file" id="weigh-doc-file" class="form-control" accept="image/*,.pdf" onchange="handleWeighDocUpload(this)" style="font-size:0.8rem; padding:0.4rem;">
+              <input type="hidden" id="weigh-doc-url">
+              <div id="weigh-doc-status" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+                Optional: Uploads slip photo directly to bucket <code>smartprocure-documents</code>
+              </div>
+            </div>
+
+            <div class="calculation-summary-card">
+              <div class="calc-row">
+                <span>Net Produce Quantity:</span>
+                <strong id="calc-net-qtl">40.000 Qtl</strong>
+              </div>
+              <div class="calc-row">
+                <span>Base 2026 MSP Rate:</span>
+                <strong id="calc-base-msp">₹ 2,425.00</strong>
+              </div>
+              <div class="calc-row">
+                <span>Grade Bonus / Moisture Penalty:</span>
+                <span id="calc-adjustments" style="font-weight: 600; color: #047857;">+ ₹50.00</span>
+              </div>
+              <div class="calc-row">
+                <span>Effective Rate / Quintal:</span>
+                <strong id="calc-effective-rate">₹ 2,475.00 / Qtl</strong>
+              </div>
+              <div class="calc-row total">
+                <span>Total Payable to Farmer:</span>
+                <span id="calc-total-payable">₹ 99,000.00</span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+              ⚖️ Record Procurement & Issue Digital J-Form Receipt
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Quick Token Selector -->
+        <div class="card" style="padding: 1.25rem;">
+          <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 1rem; color: #0f172a;">🔍 Select Token for Weighment</h4>
+          <div class="form-group">
+            <input type="text" id="weigh-token-search" class="form-control"
+                   placeholder="Enter token e.g. DOCA-26-P001"
+                   style="margin-bottom: 0.75rem;">
+          </div>
+          <button class="btn btn-secondary" style="width:100%;" onclick="loadTokenForWeighment()">
+            📋 Load Token Details
+          </button>
+          <div id="weigh-token-info" style="margin-top: 1rem; display: none;">
+            <!-- Token info populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 4: STATUS UPDATE                                        -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="admin-panel-status">
+      <div class="status-update-form">
+        <h3 style="font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem;">📝 Update Farmer Booking Status</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">
+          Manually update the status of a booking at any stage of the procurement process
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+          <div class="form-group">
+            <label class="form-label">Token Number or Booking ID</label>
+            <input type="text" id="status-token-input" class="form-control" placeholder="e.g. DOCA-26-P001">
+          </div>
+          <div class="form-group" style="display: flex; align-items: flex-end;">
+            <button class="btn btn-secondary" style="width:100%;" onclick="lookupStatusToken()">
+              🔍 Lookup Booking
+            </button>
+          </div>
+        </div>
+
+        <div id="status-booking-info" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.25rem;">
+          <!-- Booking info shown here -->
+        </div>
+
+        <div class="status-steps-grid" id="status-steps-grid" style="display:none;">
+          <button class="status-step-btn" onclick="selectStatus('booked')" data-status="booked">
+            <span class="status-step-icon">📋</span>
+            <div class="status-step-label">Booked</div>
+          </button>
+          <button class="status-step-btn" onclick="selectStatus('checked_in')" data-status="checked_in">
+            <span class="status-step-icon">✅</span>
+            <div class="status-step-label">Checked In</div>
+          </button>
+          <button class="status-step-btn" onclick="selectStatus('called')" data-status="called">
+            <span class="status-step-icon">📢</span>
+            <div class="status-step-label">Called to Desk</div>
+          </button>
+          <button class="status-step-btn" onclick="selectStatus('completed')" data-status="completed">
+            <span class="status-step-icon">⚖️</span>
+            <div class="status-step-label">Procurement Done</div>
+          </button>
+          <button class="status-step-btn" onclick="selectStatus('cancelled')" data-status="cancelled">
+            <span class="status-step-icon">❌</span>
+            <div class="status-step-label">Cancelled</div>
+          </button>
+        </div>
+
+        <div id="status-update-action" style="display:none; margin-top: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Notes / Remarks (Optional)</label>
+            <input type="text" id="status-notes" class="form-control" placeholder="Add any operator notes here...">
+          </div>
+          <button class="btn btn-primary" onclick="applyStatusUpdate()" id="btn-apply-status">
+            💾 Apply Status Update
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 5: DBT SETTLEMENTS                                      -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="admin-panel-settlements">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+          <h3>Today's Completed Procurements & DBT Settlements</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Real-time PFMS Sync</span>
+        </div>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Token #</th>
+                <th>Farmer</th>
+                <th>Crop</th>
+                <th>Net Quantity</th>
+                <th>Total Amount</th>
+                <th>Payment Status & Action</th>
+              </tr>
+            </thead>
+            <tbody id="completed-procurements-tbody">
+              <!-- Populated by admin_dashboard.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- PANEL 6: ANALYTICS                                            -->
+    <!-- =========================================================== -->
+    <div class="dashboard-panel" id="admin-panel-analytics">
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <div class="chart-card-title">📊 Procurement by Crop (Today)</div>
+          <div id="crop-chart-container" style="min-height: 200px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+            <div id="crop-analytics-display"></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">💰 Payment Status Breakdown</div>
+          <div id="payment-chart-container" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+            <div id="payment-analytics-display"></div>
+          </div>
+        </div>
+        <div class="chart-card" style="grid-column: 1/-1;">
+          <div class="chart-card-title">📈 System KPI Metrics</div>
+          <div id="kpi-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding-top: 0.75rem;">
+            <!-- KPI cards populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.dashboard-content -->
+</div><!-- /.dashboard-page -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
+{% endblock %}

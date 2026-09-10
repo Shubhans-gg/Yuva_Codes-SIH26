@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Farmer Registration | SmartProcure{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+<style>
+  .storage-upload-zone {
+    border: 2px dashed rgba(34, 197, 94, 0.4);
+    background: rgba(34, 197, 94, 0.05);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .storage-upload-zone:hover {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+  }
+  .storage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.35rem;
+  }
+</style>
+{% endblock %}
+
+{% block nav_links %}
+<a href="/" class="btn-nav-link inactive">🏠 Home</a>
+<a href="/farmer/login" class="btn-nav-link inactive">👨‍🌾 Login</a>
+<a href="/farmer/signup" class="btn-nav-link active">✍️ Register</a>
+{% endblock %}
+
+{% block sms_button %}{% endblock %}
+
+{% block content %}
+<div class="auth-page" style="padding: 3rem 1rem;">
+  <div class="auth-wrapper" style="max-width: 680px;">
+
+    <div class="auth-logo-strip">
+      <div class="brand-name">SMART<span class="highlight">PROCURE</span></div>
+      <div class="brand-sub">Farmer Registration • Department of Consumer Affairs</div>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="auth-steps-indicator">
+      <div class="auth-step-dot done" id="reg-dot-1">✓</div>
+      <div class="auth-step-line done"></div>
+      <div class="auth-step-dot active" id="reg-dot-2">2</div>
+      <div class="auth-step-line" id="reg-line-2"></div>
+      <div class="auth-step-dot" id="reg-dot-3">3</div>
+    </div>
+
+    <!-- Registration Form Card -->
+    <div class="auth-card" id="reg-form-card">
+      <div class="auth-card-header">
+        <span class="auth-card-icon">🧑‍🌾</span>
+        <div class="auth-card-title">Complete Your Farmer Profile</div>
+        <div class="auth-card-subtitle">
+          Register with DoCA & Supabase Auth to get MSP slot access and direct bank payments
+        </div>
+      </div>
+
+      <form id="farmer-reg-form" onsubmit="submitRegistration(event)">
+        
+        <!-- Mobile & Credentials -->
+        <div class="section-divider-label">📱 Mobile & Login Credentials</div>
+        <div class="signup-grid-2">
+          <div class="form-group">
+            <label class="form-label">Mobile Number *</label>
+            <div class="otp-input-group">
+              <span class="country-code">+91</span>
+              <input type="tel" id="reg-phone-input" class="form-control" placeholder="9876543210" maxlength="10" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Create Password *</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" value="farmer123" required>
+          </div>
+        </div>
+
+        <!-- Personal Details -->
+        <div class="section-divider-label">👤 Personal Details</div>
+
+        <div class="signup-grid-2">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="reg-fullname" class="form-control" placeholder="e.g. Ramesh Kumar" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Aadhaar (Last 4 digits)</label>
+            <input type="text" id="reg-aadhaar" class="form-control" placeholder="e.g. 4921" maxlength="4" inputmode="numeric">
+          </div>
+        </div>
+
+        <div class="signup-grid-3">
+          <div class="form-group">
+            <label class="form-label">State *</label>
+            <select id="reg-state" class="form-control">
+              <option value="Haryana">Haryana</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Telangana">Telangana</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">District *</label>
+            <input type="text" id="reg-district" class="form-control" placeholder="e.g. Karnal" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Village / Town</label>
+            <input type="text" id="reg-village" class="form-control" placeholder="e.g. Taraori">
+          </div>
+        </div>
+
+        <!-- Document Upload to Supabase Storage -->
+        <div class="section-divider-label">
+          📁 Verification Document
+          <span class="storage-badge">⚡ Supabase Storage</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Attach Land Ownership / Kisan Credit Card / Aadhaar Photo</label>
+          <div class="storage-upload-zone" onclick="document.getElementById('reg-doc-file').click()">
+            <div style="font-size: 2rem; margin-bottom: 0.25rem;">📸 📄</div>
+            <div style="font-size: 0.88rem; font-weight: 700; color: #e2e8f0;" id="doc-upload-status-text">
+              Tap to Take Photo (Camera) or Upload Document
+            </div>
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.35rem;">
+              Mobile Camera • PDF • JPG/PNG (Secured via Supabase Storage)
+            </div>
+          </div>
+          <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" style="flex:1;" onclick="document.getElementById('reg-doc-camera').click()">
+              📸 Take Camera Photo
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" style="flex:1;" onclick="document.getElementById('reg-doc-file').click()">
+              📁 Browse Files / PDF
+            </button>
+          </div>
+          <input type="file" id="reg-doc-camera" style="display:none;" accept="image/*" capture="environment" onchange="handleDocSelected(this)">
+          <input type="file" id="reg-doc-file" style="display:none;" accept="image/*,.pdf,.txt,.doc" onchange="handleDocSelected(this)">
+          <input type="hidden" id="reg-doc-url">
+        </div>
+
+        <!-- Bank Details -->
+        <div class="section-divider-label">💳 Bank Details for DBT Payment</div>
+
+        <div class="signup-grid-2">
+          <div class="form-group">
+            <label class="form-label">Bank Account Number *</label>
+            <input type="text" id="reg-bank-acc" class="form-control" placeholder="e.g. 30918239012"
+                   value="30918239012" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">IFSC Code *</label>
+            <input type="text" id="reg-ifsc" class="form-control" placeholder="e.g. SBIN0001234"
+                   value="SBIN0001234" style="text-transform:uppercase;" required>
+          </div>
+        </div>
+
+        <div class="signup-grid-2">
+          <div class="form-group">
+            <label class="form-label">Bank Name</label>
+            <input type="text" id="reg-bank-name" class="form-control" value="State Bank of India">
+          </div>
+          <div class="form-group">
+            <label class="form-label">UPI ID <span style="color:#94a3b8;">(Optional)</span></label>
+            <input type="text" id="reg-upi" class="form-control" placeholder="farmer@upi">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.75rem; font-size:1rem; padding: 0.9rem;" id="btn-register-submit">
+          💾 Register & Access Dashboard
+        </button>
+      </form>
+
+      <div class="auth-footer-links">
+        Already registered? <a href="/farmer/login">Login here</a>
+        &nbsp;|&nbsp;
+        <a href="/">← Back to Home</a>
+      </div>
+    </div>
+
+    <!-- Success Card (shown after registration) -->
+    <div class="auth-card" id="reg-success-card" style="display:none; text-align:center;">
+      <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+      <div class="auth-card-title">Registration Successful!</div>
+      <div class="auth-card-subtitle" style="margin-top:0.5rem;">
+        Your Kisan ID has been generated & synchronized with Supabase
+      </div>
+      <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 0.75rem; padding: 1.25rem; margin: 1.5rem 0; font-family: monospace;">
+        <div style="font-size: 0.72rem; color: #94a3b8; margin-bottom: 0.4rem;">KISAN ID</div>
+        <div id="success-kisan-id" style="font-size: 1.2rem; font-weight: 900; color: #15803d;"></div>
+      </div>
+      <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;" id="success-name"></div>
+      <div style="width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #16a34a; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem;"></div>
+      <div style="font-size: 0.82rem; color: #94a3b8;">Redirecting to your dashboard...</div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+.auth-body { background: #0f172a; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Pre-fill phone if set
+    const pendingPhone = localStorage.getItem('smartprocure_pending_phone');
+    if (pendingPhone) {
+      document.getElementById('reg-phone-input').value = pendingPhone;
+    }
+
+    const session = localStorage.getItem('smartprocure_farmer');
+    if (session) window.location.href = '/farmer/dashboard';
+  });
+
+  async function handleDocSelected(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const statusText = document.getElementById('doc-upload-status-text');
+    statusText.textContent = `⏳ Uploading ${file.name} to Supabase Storage...`;
+
+    try {
+      const url = await SupabaseAuth.uploadFile(file, 'farmer_docs');
+      if (url) {
+        document.getElementById('reg-doc-url').value = url;
+        statusText.innerHTML = `✅ <strong>${file.name}</strong> uploaded to Supabase Storage!`;
+        showToast('Document uploaded to Supabase Storage!', 'success');
+      }
+    } catch (e) {
+      statusText.textContent = `❌ Upload failed: ${e.message}`;
+      showToast('Document upload failed.', 'error');
+    }
+  }
+
+  async function submitRegistration(e) {
+    e.preventDefault();
+    const phone = document.getElementById('reg-phone-input').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const fullName = document.getElementById('reg-fullname').value.trim();
+    const email = `farmer_${phone}@smartprocure.in`;
+
+    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+      return showToast('Please enter a valid 10-digit mobile number', 'error');
+    }
+
+    const payload = {
+      phone,
+      email,
+      full_name: fullName,
+      aadhaar: document.getElementById('reg-aadhaar').value.trim(),
+      state: document.getElementById('reg-state').value,
+      district: document.getElementById('reg-district').value.trim(),
+      village: document.getElementById('reg-village').value.trim(),
+      bank_account_no: document.getElementById('reg-bank-acc').value.trim(),
+      bank_ifsc: document.getElementById('reg-ifsc').value.trim().toUpperCase(),
+      bank_name: document.getElementById('reg-bank-name').value.trim(),
+      upi_id: document.getElementById('reg-upi').value.trim(),
+      document_url: document.getElementById('reg-doc-url').value.trim()
+    };
+
+    if (!payload.full_name || !payload.district) {
+      return showToast('Please fill in all required fields (*)', 'error');
+    }
+
+    const btn = document.getElementById('btn-register-submit');
+    btn.disabled = true; btn.textContent = 'Registering & Syncing with Supabase...';
+
+    // 1. Create user in Supabase Auth client if available
+    try {
+      await SupabaseAuth.signUp(email, password, { role: 'farmer', full_name: fullName, phone });
+    } catch(err) {
+      console.warn('Supabase Auth client signup:', err);
+    }
+
+    // 2. Save profile in backend
+    try {
+      const res = await fetch('/api/auth/register-farmer', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('smartprocure_farmer', JSON.stringify(data.farmer));
+        localStorage.removeItem('smartprocure_pending_phone');
+
+        // Show success card
+        document.getElementById('reg-form-card').style.display = 'none';
+        document.getElementById('reg-success-card').style.display = '';
+        document.getElementById('success-kisan-id').textContent = data.farmer.kisan_id;
+        document.getElementById('success-name').textContent = `Welcome, ${data.farmer.full_name}!`;
+
+        setTimeout(() => window.location.href = '/farmer/dashboard', 1800);
+      } else {
+        showToast(data.error || 'Registration failed', 'error');
+        btn.disabled = false; btn.textContent = '💾 Register & Access Dashboard';
+      }
+    } catch(ex) {
+      showToast('Network error. Please try again.', 'error');
+      btn.disabled = false; btn.textContent = '💾 Register & Access Dashboard';
+    }
+  }
+</script>
+{% endblock %}

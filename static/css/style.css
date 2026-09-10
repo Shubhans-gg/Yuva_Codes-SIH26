@@ -1,0 +1,905 @@
+/* =============================================================================
+   SMARTPROCURE (SIH 2026 - PS 26032) - CORE DESIGN SYSTEM & STYLING
+   Ministry of Consumer Affairs, Food & Public Distribution (DoCA) | Yuva Codes
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Color Palette - Vibrant, High-Trust Agricultural & Civic Tech */
+  --primary-50: #eef9f2;
+  --primary-100: #d5f2df;
+  --primary-500: #10b981;
+  --primary-600: #059669;
+  --primary-700: #047857;
+  --primary-800: #065f46;
+  --primary-900: #064e3b;
+
+  --accent-gold: #f59e0b;
+  --accent-gold-light: #fef3c7;
+  --accent-blue: #2563eb;
+  --accent-blue-light: #eff6ff;
+  --accent-purple: #7c3aed;
+
+  --danger-500: #ef4444;
+  --danger-100: #fee2e2;
+  --warning-500: #f59e0b;
+  --warning-100: #fef3c7;
+  --success-500: #10b981;
+  --success-100: #d1fae5;
+
+  /* Neutral Spectrum */
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.85);
+  --border-color: #e2e8f0;
+  --border-focus: #10b981;
+
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --text-white: #ffffff;
+
+  /* Shadows & Glassmorphism */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.25);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', var(--font-sans);
+  --font-hindi: 'Noto Sans Devanagari', var(--font-sans);
+}
+
+/* Reset & Base Setup */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.05) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+[lang="hi"] body,
+.lang-hi {
+  font-family: var(--font-hindi), var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.25;
+}
+
+a {
+  color: var(--primary-600);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary-700);
+}
+
+/* Top Tricolor Strip & Header */
+.gov-strip {
+  height: 4px;
+  background: linear-gradient(90deg, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%, #138808 100%);
+  width: 100%;
+}
+
+/* Network Status Alert Banner */
+.network-status-banner {
+  background: #f59e0b;
+  color: #78350f;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.network-status-banner.online {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.network-status-banner.offline {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.top-nav {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0.65rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.emblem-badge {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.35rem;
+  box-shadow: 0 3px 8px rgba(5, 150, 105, 0.28);
+  flex-shrink: 0;
+}
+
+.brand-text h1 {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.brand-text h1 span.highlight {
+  color: var(--primary-600);
+}
+
+.sih-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.brand-text p {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.lang-btn {
+  background: #f1f5f9;
+  border: 1px solid var(--border-color);
+  padding: 0.45rem 0.85rem;
+  min-height: 40px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.lang-btn:hover,
+.lang-btn.active {
+  background: var(--primary-50);
+  border-color: var(--primary-500);
+  color: var(--primary-700);
+}
+
+.btn-nav-link {
+  padding: 0.45rem 0.95rem;
+  min-height: 40px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.btn-nav-link.active {
+  background: var(--primary-600);
+  color: white;
+}
+
+.btn-nav-link.inactive {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+}
+
+.btn-nav-link.inactive:hover {
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+
+  /* Prevent content being covered by bottom nav */
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Compact top header on mobile */
+  .top-nav {
+    padding: 0;
+  }
+
+  .nav-container {
+    padding: 0.5rem 0.85rem;
+  }
+
+  .brand-text p.gov-sub-label {
+    display: none;
+    /* Hide long sub-label on mobile screens */
+  }
+
+  .sih-badge {
+    display: none;
+  }
+
+  /* Hide desktop navigation links on mobile */
+  .nav-actions .btn-nav-link {
+    display: none;
+  }
+
+  .lang-btn {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  /* Sticky Mobile Bottom Navigation Bar */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(58px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: #ffffff;
+    border-top: 2px solid #e2e8f0;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    z-index: 998;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    text-decoration: none;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.35rem 0;
+    position: relative;
+    height: 100%;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav-item:active {
+    background: #f0fdf4;
+    transform: scale(0.96);
+  }
+
+  .mobile-nav-item.active {
+    color: #15803d;
+  }
+
+  .mobile-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background: #16a34a;
+    border-radius: 0 0 3px 3px;
+  }
+
+  .mob-nav-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    position: relative;
+    display: inline-block;
+  }
+
+  .sms-badge-count-mob {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 900;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* SMS Drawer Floating Button (Desktop) */
+.floating-sms-btn {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  min-height: 48px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 997;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (max-width: 768px) {
+
+  /* On mobile, SMS button is inside the bottom navigation bar */
+  .floating-sms-btn {
+    display: none !important;
+  }
+}
+
+.floating-sms-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+}
+
+.sms-badge-count {
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Simulated SMS Drawer Modal & Mobile Bottom Sheet */
+.sms-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1100;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sms-drawer-backdrop.active {
+  display: flex;
+  justify-content: flex-end;
+  opacity: 1;
+}
+
+.sms-phone-container {
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  background: #0f172a;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sms-sheet-handle {
+  display: none;
+}
+
+.sms-drawer-backdrop.active .sms-phone-container {
+  transform: translateX(0);
+}
+
+/* Mobile Bottom-Sheet Transformation */
+@media (max-width: 768px) {
+  .sms-drawer-backdrop.active {
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .sms-phone-container {
+    max-width: 100%;
+    height: 80vh;
+    border-radius: 1.5rem 1.5rem 0 0;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(100%);
+    border-top: 1px solid #334155;
+  }
+
+  .sms-drawer-backdrop.active .sms-phone-container {
+    transform: translateY(0);
+  }
+
+  .sms-sheet-handle {
+    display: block;
+    width: 44px;
+    height: 5px;
+    background: #475569;
+    border-radius: 3px;
+    margin: 0.65rem auto 0.2rem;
+  }
+}
+
+.sms-phone-header {
+  padding: 1rem 1.25rem;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sms-phone-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sms-phone-title h3 {
+  font-size: 0.95rem;
+  color: white;
+}
+
+.sms-phone-title p {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.sms-close-btn {
+  background: #334155;
+  border: none;
+  color: #cbd5e1;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.sms-phone-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sms-bubble {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  position: relative;
+  animation: slideInRight 0.3s ease;
+}
+
+.sms-bubble.new-sms {
+  border-left: 4px solid var(--primary-500);
+  background: #132e29;
+}
+
+.sms-bubble-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.sms-sender {
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.sms-text {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #f1f5f9;
+}
+
+.sms-badge-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-top: 0.4rem;
+}
+
+.badge-booking {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.badge-called {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.badge-weighment {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.badge-dbt {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+/* Buttons & Inputs System - Mobile-First Touch Ergonomics */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 0.75rem 1.25rem;
+  min-height: 48px;
+  /* 48px touch target standard for thumbs */
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  color: white;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+  border: 1px solid #047857;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
+  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
+}
+
+.btn-secondary {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: var(--text-main);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+  border: 1px solid #b45309;
+}
+
+.btn-accent:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: 1px solid #b91c1c;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.85rem;
+  min-height: 38px;
+  font-size: 0.82rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-lg {
+  padding: 0.95rem 1.85rem;
+  min-height: 52px;
+  font-size: 1.05rem;
+  border-radius: var(--radius-lg);
+}
+
+.form-group {
+  margin-bottom: 1.15rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: #0f172a;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  min-height: 48px;
+  /* Touch target standard */
+  border: 2px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  /* CRITICAL: 16px minimum prevents mobile browser auto-zooming */
+  font-family: inherit;
+  background: white;
+  color: #0f172a;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Glass Card */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  transition: box-shadow 0.2s ease;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+
+.toast {
+  background: white;
+  border-left: 4px solid var(--primary-600);
+  box-shadow: var(--shadow-xl);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 300px;
+  max-width: 420px;
+  pointer-events: auto;
+  animation: slideInRight 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  #toast-container {
+    top: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    align-items: center;
+  }
+
+  .toast {
+    min-width: unset;
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+.toast.success {
+  border-left-color: var(--success-500);
+}
+
+.toast.error {
+  border-left-color: var(--danger-500);
+}
+
+.toast.info {
+  border-left-color: var(--accent-blue);
+}
+
+.toast-content h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.toast-content p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Low-End Performance / Battery Optimization */
+@media (prefers-reduced-motion: reduce),
+(max-width: 768px) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+.live-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulseRing 1.5s infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Footer */
+footer {
+  margin-top: auto;
+  background: #0f172a;
+  color: #94a3b8;
+  padding: 2rem 1.5rem 1.5rem;
+  font-size: 0.8rem;
+  border-top: 1px solid #1e293b;
+}
+
+.footer-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.footer-credits strong {
+  color: white;
+}

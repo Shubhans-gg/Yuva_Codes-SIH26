@@ -541,7 +541,7 @@ def save_farmer(f: dict):
     
 # SLOTS
 
-def get_slot_for_date_and_centre(centre_id: str, booking_date: str):
+def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
     centre = get_centre_by_id(centre_id)
     raw_daily_cap = centre.get("daily_capacity", 60) if isinstance(centre, dict) else 60
     daily_cap = raw_daily_cap if isinstance(raw_daily_cap, (int, float)) else 60

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public TV Live Queue Display | SMARTPROCURE - DoCA</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      background: #020617;
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .display-header {
+      background: #0f172a;
+      padding: 1rem 2rem;
+      border-bottom: 2px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .display-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .display-title h1 {
+      font-size: 1.8rem;
+      color: white;
+    }
+
+    .display-clock {
+      font-family: monospace;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #38bdf8;
+      background: #1e293b;
+      padding: 0.25rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid #334155;
+    }
+
+    .display-main-content {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .display-counters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .display-counter-card {
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .display-counter-card.serving-flash {
+      border-color: #10b981;
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, #0f172a 100%);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+    }
+
+    .counter-badge-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .counter-num-tag {
+      background: #2563eb;
+      color: white;
+      font-weight: 800;
+      font-size: 1.1rem;
+      padding: 0.3rem 0.85rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .counter-desk-type {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+
+    .counter-token-giant {
+      font-size: 3.5rem;
+      font-weight: 900;
+      font-family: var(--font-heading);
+      color: #34d399;
+      letter-spacing: 0.05em;
+      margin: 0.5rem 0;
+      line-height: 1.1;
+    }
+
+    .counter-farmer-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    /* Bottom Ticker */
+    .display-bottom-ticker-bar {
+      background: #0f172a;
+      border-top: 2px solid #1e293b;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .ticker-label {
+      font-weight: 800;
+      color: #fbbf24;
+      font-size: 1rem;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .ticker-chips-row {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      flex: 1;
+      padding-bottom: 0.2rem;
+    }
+
+    .waiting-chip {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .waiting-pos {
+      background: #3b82f6;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.1rem 0.4rem;
+      border-radius: 50%;
+    }
+
+    .waiting-tok {
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .waiting-name {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Tricolor Strip -->
+  <div class="gov-strip"></div>
+
+  <div class="display-header">
+    <div class="display-title">
+      <span style="font-size: 2.2rem;">🌾</span>
+      <div>
+        <h1>SMARTPROCURE • LIVE MANDI QUEUE BOARD</h1>
+        <p style="color: #94a3b8; font-size: 0.85rem;">Ministry of Consumer Affairs, Food & Public Distribution (DoCA)</p>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+      <select id="display-centre-select" class="form-control" style="background: #1e293b; color: white; border-color: #334155; width: auto; font-size: 1rem; font-weight: 700;">
+        {% for c in centres %}
+          <option value="{{ c.id }}" {% if loop.first %}selected{% endif %}>
+            📍 {{ c.name }} ({{ c.district }})
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="display-clock" id="display-live-clock">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="display-main-content">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="font-size: 1.4rem; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.05em;">
+        Active Counter Desks • Currently Serving
+      </h2>
+      <div style="display: flex; align-items: center; gap: 0.5rem; color: #34d399; font-weight: 700;">
+        <span class="live-pulse"></span> LIVE BROADCAST
+      </div>
+    </div>
+
+    <!-- Active Counters Grid -->
+    <div id="display-counters-grid" class="display-counters-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Bottom Waiting Queue Ticker -->
+  <div class="display-bottom-ticker-bar">
+    <div class="ticker-label">⏳ Next in Queue:</div>
+    <div id="display-waiting-ticker" class="ticker-chips-row">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Supabase JS Client for Realtime -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SUPABASE_CONFIG = {
+      url: "{{ config.SUPABASE_URL }}",
+      key: "{{ config.SUPABASE_KEY }}"
+    };
+    if (window.SUPABASE_CONFIG.url && window.SUPABASE_CONFIG.key && window.supabase) {
+      window.supabaseClient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.key);
+    }
+  </script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/display.js') }}"></script>
+</body>
+</html>

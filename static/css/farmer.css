@@ -1,0 +1,480 @@
+/* =============================================================================
+   SMARTPROCURE (SIH 2026) - FARMER WEB APP STYLING
+   ============================================================================= */
+
+.farmer-hero {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+  color: white;
+  padding: 2.5rem 1.5rem 3.5rem;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  margin-bottom: 2rem;
+}
+
+.farmer-hero::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.hero-content {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: 1rem;
+  color: #d1fae5;
+  max-width: 650px;
+  margin: 0 auto 1.5rem;
+}
+
+/* User Journey Steps Bar */
+.journey-bar-wrapper {
+  max-width: 1100px;
+  margin: -2.2rem auto 2.5rem;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 10;
+}
+
+.journey-steps {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.step-item:hover {
+  background: var(--primary-50);
+}
+
+.step-item.active {
+  background: var(--primary-50);
+  border-bottom: 3px solid var(--primary-600);
+}
+
+.step-item.active .step-icon-circle {
+  background: var(--primary-600);
+  color: white;
+  box-shadow: 0 0 0 4px var(--primary-100);
+}
+
+.step-item.completed .step-icon-circle {
+  background: #10b981;
+  color: white;
+}
+
+.step-icon-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  margin-bottom: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.step-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-main);
+}
+
+.step-subtitle {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* Main Container */
+.farmer-container {
+  max-width: 1050px;
+  margin: 0 auto 4rem;
+  padding: 0 1.25rem;
+}
+
+/* Tab Sections */
+.farmer-tab-section {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.farmer-tab-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Slot Selection Grid */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.slot-card {
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.slot-card:hover:not(.disabled) {
+  border-color: var(--primary-500);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.slot-card.selected {
+  border-color: var(--primary-600);
+  background: var(--primary-50);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.slot-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.slot-time {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  margin-bottom: 0.4rem;
+}
+
+.slot-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+}
+
+.slot-badge.available { background: var(--success-100); color: var(--primary-800); }
+.slot-badge.filling_fast { background: var(--warning-100); color: #b45309; }
+.slot-badge.full { background: var(--danger-100); color: var(--danger-500); }
+
+/* Live Token Card */
+.token-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: white;
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid #334155;
+  position: relative;
+  overflow: hidden;
+}
+
+.token-card::before {
+  content: '';
+  position: absolute;
+  top: -50px; right: -50px;
+  width: 150px; height: 150px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.token-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 1rem;
+}
+
+.token-number-large {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #34d399;
+  letter-spacing: 0.05em;
+  margin: 0.2rem 0;
+}
+
+.token-status-pill {
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.token-status-pill.booked { background: #3b82f6; color: white; }
+.token-status-pill.checked_in { background: #10b981; color: white; animation: pulseGlow 2s infinite; }
+.token-status-pill.called { background: #ef4444; color: white; animation: pulseGlow 1s infinite; }
+.token-status-pill.completed { background: #059669; color: white; }
+
+.queue-metric-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  text-align: center;
+}
+
+.queue-metric-val {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.queue-metric-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* Quality & Payment Status Timeline */
+.timeline-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.timeline-stepper::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  background: var(--border-color);
+}
+
+.timeline-node {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-dot {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.timeline-node.done .timeline-dot {
+  background: #10b981;
+  border-color: #059669;
+  color: white;
+}
+
+.timeline-node.active .timeline-dot {
+  background: var(--primary-500);
+  border-color: var(--primary-700);
+  color: white;
+  box-shadow: 0 0 0 5px var(--primary-100);
+}
+
+.timeline-content {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  flex: 1;
+  box-shadow: var(--shadow-sm);
+}
+
+.timeline-content h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-content p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* Responsive adjustments for Mobile First Farmer Experience */
+@media (max-width: 850px) {
+  .journey-steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .hero-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .slot-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+  }
+
+  .slot-card {
+    padding: 0.85rem 0.65rem;
+    min-height: 62px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .slot-time {
+    font-size: 0.85rem;
+  }
+
+  .slot-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.45rem;
+  }
+
+  .journey-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .token-card {
+    padding: 1.25rem 1rem;
+    border-radius: 1rem;
+  }
+
+  .token-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .token-number-large {
+    font-size: 1.65rem;
+  }
+
+  .queue-metrics-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  .queue-metric-val {
+    font-size: 1.35rem;
+  }
+
+  .timeline-stepper {
+    gap: 1rem;
+  }
+
+  .timeline-dot {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+  }
+
+  .timeline-content {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .timeline-content h4 {
+    font-size: 0.88rem;
+  }
+}
+
+/* Indian Bank Passbook Style for DBT Payments on Mobile */
+.passbook-card {
+  background: #ffffff;
+  border: 2px solid #86efac;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.08);
+}
+
+.passbook-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed #bbf7d0;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.passbook-amount {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #15803d;
+  font-family: var(--font-heading);
+}
+
+.passbook-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 500px) {
+  .passbook-grid {
+    grid-template-columns: 1fr;
+  }
+}

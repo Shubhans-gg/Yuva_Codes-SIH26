@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}SmartProcure — Digital Farm Procurement Portal | SIH 2026{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% endblock %}
+
+{% block content %}
+<!-- ======================================================= -->
+<!-- HERO SECTION                                             -->
+<!-- ======================================================= -->
+<section class="landing-hero">
+  <!-- Animated Particle Background -->
+  <div class="hero-particles" id="hero-particles"></div>
+
+  <div class="hero-content-wrapper">
+    <div class="hero-emblem">
+      <span>🇮🇳</span>
+      <span>Government of India • Department of Consumer Affairs</span>
+      <span style="background: rgba(255,255,255,0.15); padding: 0.15rem 0.5rem; border-radius: 0.4rem;">SIH 2026</span>
+    </div>
+
+    <h2 class="hero-title-main">
+      Smart <span class="highlight">Procurement</span><br>
+      for Every Farmer
+    </h2>
+
+    <p class="hero-subtitle-main">
+      Book your Mandi slot, track live queue positions, and receive guaranteed MSP payments directly to your bank — all
+      from your mobile.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="/farmer/login" class="btn-hero-farmer" id="hero-farmer-btn">
+        👨‍🌾 Farmer Login / Signup
+      </a>
+      <a href="/admin/login" class="btn-hero-admin" id="hero-admin-btn">
+        🏢 Admin / Operator Login
+      </a>
+    </div>
+
+    <div class="hero-stats-row">
+      <div class="hero-stat-item">
+        <strong id="stat-farmers-count">5,000+</strong>
+        <span>Registered Farmers</span>
+      </div>
+      <div class="hero-stat-item">
+        <strong>68%</strong>
+        <span>Queue Wait Reduction</span>
+      </div>
+      <div class="hero-stat-item">
+        <strong>100%</strong>
+        <span>DBT Direct to Bank</span>
+      </div>
+      <div class="hero-stat-item">
+        <strong>8</strong>
+        <span>Crops Supported</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- MSP PRICE TICKER                                         -->
+<!-- ======================================================= -->
+<div class="msp-ticker-section">
+  <div class="ticker-wrapper">
+    <div class="ticker-label">
+      📊 LIVE MSP 2026
+    </div>
+    <div style="overflow: hidden; flex: 1;">
+      <div class="ticker-track" id="msp-ticker-track">
+        <!-- Populated by landing.js -->
+        <div class="ticker-item">
+          <span class="ticker-crop-name">Loading...</span>
+          <span class="ticker-msp">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- CROP MSP PRICES GRID                                     -->
+<!-- ======================================================= -->
+<section class="landing-section">
+  <div class="section-header">
+    <div class="section-tag">📊 Government Approved</div>
+    <h2 class="section-title">2026 Minimum Support Prices (MSP)</h2>
+    <p class="section-desc">Officially notified MSP rates for Kharif & Rabi crops as per Cabinet Committee on Economic
+      Affairs (CCEA)</p>
+  </div>
+
+  <div class="crop-prices-grid" id="crop-prices-grid">
+    <!-- Populated by landing.js -->
+    {% for crop in crops %}
+    <div class="crop-price-card">
+      <div class="crop-category-pill {{ crop.category }}">{{ crop.category }}</div>
+      <div class="crop-price-name">{{ crop.crop_name }}</div>
+      <div class="crop-price-hindi">{{ crop.hindi_name }}</div>
+      <div class="crop-msp-rate">₹{{ "{:,.0f}".format(crop.msp_rate_per_quintal) }}</div>
+      <div class="crop-msp-label">per Quintal (100 kg)</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- PROCUREMENT CENTRE FINDER (LEAFLET MAP)                  -->
+<!-- ======================================================= -->
+<section class="centre-finder-section">
+  <div class="section-header">
+    <div class="section-tag">📍 Find Nearby</div>
+    <h2 class="section-title">Locate Nearest Procurement Centre</h2>
+    <p class="section-desc">Search by city or district to find government procurement Mandis near you</p>
+  </div>
+
+  <div class="centre-finder-box">
+    <div class="map-search-bar">
+      <input type="text" id="map-search-input" class="map-search-input"
+        placeholder="Enter your city, district or pincode... e.g. Karnal, Ludhiana" value="" autocomplete="off">
+      <div class="map-search-actions">
+        <button class="btn-locate" id="btn-geolocate" onclick="geoLocateMe()" aria-label="Use current location">
+          📍 Use My Location
+        </button>
+        <button class="btn-locate" id="btn-search-map" onclick="searchMapLocation()"
+          style="background: linear-gradient(135deg, #1d4ed8, #3b82f6);" aria-label="Search Mandi">
+          🔍 Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile View Mode Toggle (Map vs List) -->
+    <div class="mobile-map-toggle-bar" id="mobile-map-toggle-bar">
+      <button type="button" class="btn-toggle-view active" id="btn-view-list" onclick="setMobileMapView('list')">
+        📋 Mandi List (<span id="mob-centre-count">{{ centres|length }}</span>)
+      </button>
+      <button type="button" class="btn-toggle-view" id="btn-view-map" onclick="setMobileMapView('map')">
+        🗺️ Map View
+      </button>
+    </div>
+
+    <div class="map-container-grid">
+      <div id="leaflet-map" class="map-view-box"></div>
+
+      <div class="centres-list-panel" id="centres-list-panel">
+        <div class="centres-list-header">
+          <span>🏢 Procurement Centres</span>
+          <span id="centres-count-badge"
+            style="background: #dcfce7; color: #15803d; padding: 0.15rem 0.5rem; border-radius: 0.4rem; font-size: 0.72rem; font-weight: 700;">{{
+            centres|length }} centres</span>
+        </div>
+        <div id="centres-list-container">
+          {% for centre in centres %}
+          <div class="centre-list-item"
+            onclick="focusMapCentre('{{ centre.id }}', {{ centre.latitude }}, {{ centre.longitude }})"
+            id="centre-list-{{ centre.id }}" role="button" tabindex="0">
+            <div class="centre-item-name">{{ centre.name }}</div>
+            <div class="centre-item-address">📍 {{ centre.location_address }}</div>
+            <div class="centre-item-badges">
+              <span class="centre-badge active">✓ {{ centre.status|title }}</span>
+              <span class="centre-badge capacity">{{ centre.daily_capacity }} slots/day</span>
+              <span class="centre-badge" style="background: #f3e8ff; color: #6b21a8;">{{ centre.active_counters }}
+                counters</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- HOW IT WORKS                                             -->
+<!-- ======================================================= -->
+<section class="landing-section alt">
+  <div class="section-header">
+    <div class="section-tag">⚡ Simple Process</div>
+    <h2 class="section-title">How SmartProcure Works</h2>
+    <p class="section-desc">From registration to payment in 6 easy steps — no paperwork, no queues</p>
+  </div>
+
+  <div class="how-it-works-grid">
+    <div class="step-card">
+      <div class="step-number">1</div>
+      <span class="step-icon-lg">📱</span>
+      <div class="step-card-title">Register via Mobile OTP</div>
+      <div class="step-card-desc">Verify your mobile number with OTP, then fill your Aadhaar & bank details once</div>
+    </div>
+    <div class="step-card">
+      <div class="step-number">2</div>
+      <span class="step-icon-lg">🎫</span>
+      <div class="step-card-title">Book a Guaranteed Slot</div>
+      <div class="step-card-desc">Select your nearest Mandi, crop type, preferred date & time — get a digital token
+        instantly</div>
+    </div>
+    <div class="step-card">
+      <div class="step-number">3</div>
+      <span class="step-icon-lg">🚗</span>
+      <div class="step-card-title">Arrive & Check-In</div>
+      <div class="step-card-desc">Arrive at your booked time and check-in via app. Skip the physical queue entirely
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-number">4</div>
+      <span class="step-icon-lg">👥</span>
+      <div class="step-card-title">Track Live Queue Position</div>
+      <div class="step-card-desc">Watch real-time updates on your token position and estimated wait time on your phone
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-number">5</div>
+      <span class="step-icon-lg">⚖️</span>
+      <div class="step-card-title">Weighment & Quality Check</div>
+      <div class="step-card-desc">Digital weighbridge records your produce. Quality grade assigned by certified
+        agronomist</div>
+    </div>
+    <div class="step-card">
+      <div class="step-number">6</div>
+      <span class="step-icon-lg">💳</span>
+      <div class="step-card-title">Direct Bank Transfer (DBT)</div>
+      <div class="step-card-desc">MSP payment credited directly to your linked bank account via PFMS — no middlemen
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- CTA BOTTOM BANNER                                        -->
+<!-- ======================================================= -->
+<section class="cta-banner">
+  <h2>Ready to Sell Your Crop at MSP?</h2>
+  <p>Join thousands of farmers already benefiting from transparent, queue-free digital procurement</p>
+  <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <a href="/farmer/signup" class="btn-hero-farmer">
+      ✍️ Register as Farmer
+    </a>
+    <a href="/farmer/login" class="btn-hero-admin">
+      🔐 Already Registered? Login
+    </a>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPcE=" crossorigin=""></script>
+<script>
+  // Pass centres data to JS
+  const CENTRES_DATA = {{ centres | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+{% endblock %}
