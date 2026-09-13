@@ -4,6 +4,7 @@ import hashlib
 import uuid
 import datetime
 from config import Config
+from sms import send_sms
 from database import (
     init_db, get_all_centres, get_centre_by_id, get_all_crops,
     get_slots_for_date_and_centre, get_live_queue_for_centre, get_farmer_by_phone,
@@ -394,8 +395,344 @@ def create_booking():
     if not farmer or not centre or not crop:
         return jsonify({"success": False, "error": "Farmer, Centre or Crop record not found"}), 404
 
-    token_count = get_booking_count_by_date(centre_id, booking_date)+1
-    token_number = f""
+
+    token_count = get_booking_count_by_date(centre_id, booking_date) + 1
+    token_number = f"DOCA-26-P{token_count:03d}"
+    booking_id = f"BOOK-{uuid.uuid4().hex[:8].upper()}"
+    now_iso = datetime.datetime.now().isoformat()
+
+    b = {
+        "id": booking_id,
+        "token_number": token_number,
+        "farmer_id": farmer_id,
+        "centre_id": centre_id,
+        "crop_id": crop_id,
+        "booking_date": booking_date,
+        "time_slot": time_slot,
+        "estimated_quantity_quintals": estimated_qty,
+        "vehicle_number": vehicle_no,
+        "booking_status": "booked",
+        "created_at": now_iso
+    }
+
+    try:
+        insert_booking(b)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to save booking: {str(e)}"}), 500
+
+    sms_res = send_sms(
+        phone=farmer['phone'],
+        recipient_name=farmer['full_name'],
+        notification_type='booking_confirm',
+        name=farmer['full_name'],
+        centre_name=centre['name'],
+        date=booking_date,
+        slot=time_slot,
+        token=token_number,
+        track_url=f"/#track?token={token_number}"
+    )
+
+    b['farmer_name'] = farmer['full_name']
+    b['farmer_phone'] = farmer['phone']
+    b['centre_name'] = centre['name']
+    b['crop_name'] = crop['crop_name']
+
+    return jsonify({
+        "success": True,
+        "message": f"Slot booked successfully! Token {token_number} generated.",
+        "booking": b,
+        "sms_sent": sms_res
+    })
+
+
+# 5. Farmer Check-in (Arrive at Procurement Centre)
+@app.route('/api/bookings/<booking_id>/check-in', methods=['POST'])
+def farmer_check_in(booking_id):
+    booking = get_booking_by_id_or_token(booking_id)
+    if not booking:
+        return jsonify({"success": False, "error": "Booking not found"}), 404
+
+    now_iso = datetime.datetime.now().isoformat()
+    try:
+        update_booking_check_in(booking['id'], now_iso)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Check-in failed: {str(e)}"}), 500
+
+    live_info = get_live_queue_for_centre(booking['centre_id'])
+    queue_pos = live_info.get("total_active_in_queue", 1)
+    estimated_wait = max(2, (queue_pos - 1) * 12)
+
+    sms_res = send_sms(
+        phone=booking['farmer_phone'],
+        recipient_name=booking['farmer_name'],
+        notification_type='queue_checkin',
+        token=booking['token_number'],
+        position=queue_pos,
+        wait_time=estimated_wait
+    )
+
+    return jsonify({
+        "success": True,
+        "message": f"Check-in successful! You are #{queue_pos} in line.",
+        "queue_position": queue_pos,
+        "estimated_wait_minutes": estimated_wait,
+        "token_number": booking['token_number'],
+        "sms_sent": sms_res
+    })
+
+
+# 6. Live Queue State
+@app.route('/api/queue/live', methods=['GET'])
+def live_queue():
+    centre_id = request.args.get('centre_id', 'CENTRE-01')
+    try:
+        queue_data = get_live_queue_for_centre(centre_id)
+        return jsonify({"success": True, "data": queue_data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# 7. Operator Actions: Call Next Token to Counter
+@app.route('/api/admin/call-next', methods=['POST'])
+def call_next_token():
+    data = request.json or {}
+    centre_id = data.get('centre_id', 'CENTRE-01')
+    desk_id = data.get('desk_id', 'DESK-01')
+    token_number = data.get('token_number')
+
+    desk = get_desk_by_id(desk_id)
+    if not desk:
+        return jsonify({"success": False, "error": "Counter Desk not found"}), 404
+
+    now_iso = datetime.datetime.now().isoformat()
+
+    if not token_number:
+        live_info = get_live_queue_for_centre(centre_id)
+        waiting = [b for b in live_info.get('queue', []) if b.get('booking_status') == 'checked_in']
+        if not waiting:
+            return jsonify({"success": False, "error": "No checked-in farmers waiting in queue"}), 400
+        target_booking = waiting[0]
+    else:
+        target_booking = get_booking_by_token(token_number)
+        if not target_booking:
+            return jsonify({"success": False, "error": "Specified booking token not found"}), 404
+
+    tok_num = target_booking['token_number']
+
+    try:
+        assign_desk_token(target_booking['id'], tok_num, desk_id, now_iso)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to assign desk: {str(e)}"}), 500
+
+    farmer = get_farmer_by_id(target_booking['farmer_id'])
+    sms_res = None
+    if farmer:
+        sms_res = send_sms(
+            phone=farmer['phone'],
+            recipient_name=farmer['full_name'],
+            notification_type='token_called',
+            token=tok_num,
+            name=farmer['full_name'],
+            desk_name=desk.get('desk_name', f"Counter {desk.get('desk_number')}")
+        )
+
+    return jsonify({
+        "success": True,
+        "message": f"Token {tok_num} called to {desk.get('desk_name')}",
+        "token_number": tok_num,
+        "desk": desk,
+        "sms_sent": sms_res
+    })
+
+
+# 8. Procurement Recording & Quality Assessment (J-Form Generation)
+@app.route('/api/procurement/record', methods=['POST'])
+def record_procurement_api():
+    data = request.json or {}
+    token_number = data.get('token_number')
+    gross_weight_kg = float(data.get('gross_weight_kg', 0.0))
+    tare_weight_kg = float(data.get('tare_weight_kg', 0.0))
+    moisture_pct = float(data.get('moisture_percentage', 12.0))
+    quality_grade = data.get('quality_grade', 'Grade A')
+    operator_notes = data.get('operator_notes', 'Verified grain quality and weight.')
+    verified_by = data.get('verified_by', 'S. K. Sharma (Procurement Officer)')
+    document_url = data.get('document_url', '').strip() or f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/sample/doca_verification_sample.txt"
+
+    if not token_number or gross_weight_kg <= 0 or tare_weight_kg < 0:
+        return jsonify({"success": False, "error": "Valid token and weight measurements required"}), 400
+
+    net_weight_kg = max(0.0, gross_weight_kg - tare_weight_kg)
+    net_weight_quintals = round(net_weight_kg / 100.0, 3)
+
+    booking = get_booking_by_token(token_number)
+    if not booking:
+        return jsonify({"success": False, "error": "Booking record not found for this token"}), 404
+
+    base_msp = float(booking.get('msp_rate_per_quintal', 2425.0))
+    max_moisture = 12.0
+    moisture_penalty = 0.0
+    if moisture_pct > max_moisture:
+        moisture_penalty = round((moisture_pct - max_moisture) * 40.0, 2)
+
+    grade_bonus = 50.0 if quality_grade == 'Grade A' else 0.0
+    effective_rate = round(base_msp + grade_bonus - moisture_penalty, 2)
+    total_payable = round(net_weight_quintals * effective_rate, 2)
+
+    receipt_number = f"DOCA-JFORM-2026-{uuid.uuid4().hex[:6].upper()}"
+    procurement_id = f"PROC-{uuid.uuid4().hex[:8].upper()}"
+    now_iso = datetime.datetime.now().isoformat()
+
+    p = {
+        "id": procurement_id,
+        "booking_id": booking['id'],
+        "token_number": token_number,
+        "farmer_id": booking['farmer_id'],
+        "centre_id": booking['centre_id'],
+        "crop_id": booking['crop_id'],
+        "gross_weight_kg": gross_weight_kg,
+        "tare_weight_kg": tare_weight_kg,
+        "net_weight_kg": net_weight_kg,
+        "net_weight_quintals": net_weight_quintals,
+        "moisture_percentage": moisture_pct,
+        "quality_grade": quality_grade,
+        "base_msp_per_quintal": base_msp,
+        "moisture_penalty_per_quintal": moisture_penalty,
+        "grade_bonus_per_quintal": grade_bonus,
+        "effective_rate_per_quintal": effective_rate,
+        "total_payable_amount": total_payable,
+        "receipt_number": receipt_number,
+        "document_url": document_url,
+        "operator_notes": operator_notes,
+        "verified_by": verified_by,
+        "created_at": now_iso
+    }
+
+    try:
+        insert_procurement_record(p, booking['id'], booking.get('assigned_desk_id'), now_iso)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to record procurement: {str(e)}"}), 500
+
+    # Initiate DBT Payment txn
+    t = {
+        "id": f"TXN-{uuid.uuid4().hex[:8].upper()}",
+        "procurement_id": procurement_id,
+        "farmer_id": booking['farmer_id'],
+        "payable_amount": total_payable,
+        "payment_status": "initiated",
+        "pfms_batch_id": f"BATCH-DOCA-{uuid.uuid4().hex[:4].upper()}",
+        "payment_mode": "DBT_PFMS",
+        "initiated_at": now_iso,
+        "remarks": "Procurement approved. Queued for DBT transfer."
+    }
+    try:
+        create_payment_txn(t)
+    except Exception as e:
+        print(f"Warning: Failed to create payment txn: {e}")
+
+    sms_res = send_sms(
+        phone=booking['farmer_phone'],
+        recipient_name=booking['farmer_name'],
+        notification_type='weighment_done',
+        token=token_number,
+        crop=booking.get('crop_name', 'Crop'),
+        net_weight=net_weight_quintals,
+        moisture=moisture_pct,
+        grade=quality_grade,
+        amount=total_payable,
+        receipt_no=receipt_number
+    )
+
+    return jsonify({
+        "success": True,
+        "message": f"Procurement recorded! J-Form Receipt {receipt_number} generated.",
+        "receipt_number": receipt_number,
+        "net_weight_quintals": net_weight_quintals,
+        "effective_rate_per_quintal": effective_rate,
+        "total_payable_amount": total_payable,
+        "procurement_id": procurement_id,
+        "sms_sent": sms_res
+    })
+
+
+# 9. DBT Payment Dispatch & Real-time Settlement
+@app.route('/api/procurement/payout', methods=['POST'])
+def process_dbt_payout():
+    data = request.json or {}
+    receipt_number = data.get('receipt_number')
+
+    proc = get_procurement_by_receipt(receipt_number)
+    if not proc:
+        return jsonify({"success": False, "error": "Procurement record not found"}), 404
+
+    utr = f"PFMS{datetime.datetime.now().strftime('%Y%m%d')}{uuid.uuid4().hex[:8].upper()}"
+    now_iso = datetime.datetime.now().isoformat()
+
+    try:
+        update_payment_credited(proc['id'], utr, now_iso)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to credit payout: {str(e)}"}), 500
+
+    farmer = get_farmer_by_id(proc['farmer_id'])
+    crops = get_all_crops()
+    crop = next((c for c in crops if c['id'] == proc['crop_id']), None)
+
+    sms_res = None
+    if farmer and crop:
+        sms_res = send_sms(
+            phone=farmer['phone'],
+            recipient_name=farmer['full_name'],
+            notification_type='dbt_credited',
+            amount=proc['total_payable_amount'],
+            crop=crop['crop_name'],
+            utr=utr,
+            receipt_no=proc['receipt_number']
+        )
+
+    return jsonify({
+        "success": True,
+        "message": f"DBT Transfer of Rs. {proc['total_payable_amount']} credited successfully!",
+        "utr": utr,
+        "credited_at": now_iso,
+        "sms_sent": sms_res
+    })
+
+
+# 10. Farmer Booking & Procurement Tracker
+@app.route('/api/farmer/track', methods=['GET'])
+def track_farmer():
+    phone = request.args.get('phone', '').strip()
+    token = request.args.get('token', '').strip()
+
+    if token:
+        booking = get_farmer_bookings(token=token)
+        if not booking:
+            return jsonify({"success": False, "error": "Token not found"}), 404
+        return jsonify({"success": True, "booking": booking})
+
+    elif phone:
+        bookings = get_farmer_bookings(phone=phone)
+        return jsonify({"success": True, "bookings": bookings})
+
+    return jsonify({"success": False, "error": "Phone or Token is required"}), 400
+
+
+# 11. SMS Notification History
+@app.route('/api/sms/logs', methods=['GET'])
+def get_sms_logs():
+    phone = request.args.get('phone', '').strip()
+    logs = db_get_sms_logs(phone=phone if phone else None)
+    return jsonify({"success": True, "logs": logs})
+
+
+# 12. Analytics Summary (DoCA / SIH Dashboard)
+@app.route('/api/analytics/summary', methods=['GET'])
+def analytics_summary():
+    try:
+        metrics = get_analytics_summary()
+        return jsonify({"success": True, "metrics": metrics})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 if __name__ == '__main__':
     print(f"Starting SMARTPROCURE Platform on port {Config.PORT}...")
