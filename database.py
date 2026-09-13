@@ -3,21 +3,14 @@
 # Connects Supabase PostgreSQL, Supabase Auth, Supabase Storage, and Realtime
 # =============================================================================
 
-import sqlite3
 import os
-from config import Config
-from supabase import create_client, Client
 import uuid
 import datetime
+from concurrent.futures import ThreadPoolExecutor
+from config import Config
+from supabase import create_client, Client
 
-
-# ─── SQLite Local Backup Database Configuration ─────────────────────────────
-DB_FILE = os.path.join(os.path.dirname(__file__),'smartprocure_backup.db')
-
-def get_sqlite_con():
-    con = sqlite3.connect(DB_FILE)
-    con.row_factory = sqlite3.Row
-    return con
+STORAGE_BUCKET = "smartprocure-documents"
 
 # ─── Supabase Clients ────────────────────────────────────────────────────────
 if not Config.SUPABASE_URL or not Config.SUPABASE_KEY:
@@ -26,47 +19,27 @@ if not Config.SUPABASE_URL or not Config.SUPABASE_KEY:
         "Get them from: https://supabase.com → Your Project → Settings → API"
     )
 
-
 supabase: Client = create_client(
     Config.SUPABASE_URL,
     Config.SUPABASE_KEY
 )
 
-
-# Service-role client for backend operations (bypasses RLS where necessary)
+# Service-role client for backend operations
 supabase_admin: Client = create_client(
     Config.SUPABASE_URL,
     Config.SUPABASE_SERVICE_ROLE_KEY
 ) if Config.SUPABASE_SERVICE_ROLE_KEY else supabase
 
-from concurrent.futures import ThreadPoolExecutor
 _db_pool = ThreadPoolExecutor(max_workers=5)
 
-def _async_sync(func, *args, **kwargs):
-    """Executes non-blocking write to Supabase or background workers."""
+def _async_run(func, *args, **kwargs):
+    """Executes background worker function safely."""
     try:
         _db_pool.submit(func, *args, **kwargs)
     except Exception as e:
-        print(f"[ASYNC SYNC ERROR] {e}")
+        print(f"[ASYNC EXEC ERROR] {e}")
 
-def sqlite_sync_write(query, params=()):
-    """Executes non-blocking write to local SQLite backup database."""
-    def _run():
-        try:
-            conn = get_sqlite_con()
-            conn.execute(query, params)
-            conn.commit()
-            conn.close()
-
-        except Exception as e:
-            print(f"[SQLITE BACKUP WRITE ERROR] {e}")
-
-    _async_sync(_run)     
-
-
-STORAGE_BUCKET = "smartprocure-documents"
-
-# Fallback in-memory catalog cache in case DB tables are initializing
+# Fallback catalog data
 DEFAULT_CENTRES = [
     {"id": "CENTRE-01", "name": "Karnal Central Anaj Mandi", "code": "HR-KAR-01", "state": "Haryana", "district": "Karnal", "location_address": "Sector 4, GT Road, Karnal", "pincode": "132001", "latitude": 29.6857, "longitude": 76.9905, "daily_capacity": 80, "active_counters": 4, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0184-2254321", "status": "active"},
     {"id": "CENTRE-02", "name": "Ludhiana Grain Hub", "code": "PB-LDH-02", "state": "Punjab", "district": "Ludhiana", "location_address": "Grain Market Road, Gill Road, Ludhiana", "pincode": "141003", "latitude": 30.9010, "longitude": 75.8573, "daily_capacity": 100, "active_counters": 5, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0161-2401928", "status": "active"},
@@ -97,49 +70,53 @@ DEFAULT_DESKS = [
     {"id": "DESK-08", "centre_id": "CENTRE-02", "desk_number": 4, "desk_name": "Counter 4 - DBT PFMS Processing", "desk_type": "settlement_and_receipt", "operator_name": "Harpreet Sharma (DBT Officer)", "status": "idle", "current_token": None}
 ]
 
-# Local cache for immediate updates
+DEFAULT_FARMERS = {
+    "9876543210": {
+        "id": "FARMER-001",
+        "phone": "9876543210",
+        "full_name": "Ram Lal Verma",
+        "email": "farmer1@smartprocure.in",
+        "aadhaar_masked": "XXXX-XXXX-4921",
+        "kisan_id": "KISAN-HR-2026-08192",
+        "state": "Haryana",
+        "district": "Karnal",
+        "village": "Taraori",
+        "bank_account_no": "30918239012",
+        "bank_ifsc": "SBIN0001234",
+        "bank_name": "State Bank of India",
+        "upi_id": "ramlal@upi",
+        "document_url": f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/sample/doca_verification_sample.txt",
+        "created_at": datetime.datetime.now().isoformat()
+    },
+    "9812345678": {
+        "id": "FARMER-002",
+        "phone": "9812345678",
+        "full_name": "Baldev Singh Dhillon",
+        "email": "farmer2@smartprocure.in",
+        "aadhaar_masked": "XXXX-XXXX-8832",
+        "kisan_id": "KISAN-PB-2026-04128",
+        "state": "Punjab",
+        "district": "Ludhiana",
+        "village": "Sahnewal",
+        "bank_account_no": "50281923019",
+        "bank_ifsc": "PUNB0123400",
+        "bank_name": "Punjab National Bank",
+        "upi_id": "baldev@pnb",
+        "document_url": f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/sample/doca_verification_sample.txt",
+        "created_at": datetime.datetime.now().isoformat()
+    }
+}
+
+DEFAULT_ADMINS = {
+    "admin": {"id": "ADMIN-01", "username": "admin", "email": "admin@smartprocure.in", "password_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", "full_name": "Super Admin (DoCA HQ)", "centre_id": None, "role": "superadmin"},
+    "karnal_op": {"id": "ADMIN-02", "username": "karnal_op", "email": "karnal.op@smartprocure.in", "password_hash": "0b7849e7b25203b57fa23eb41a10ec88863f6ebecdfa12b6a953e5e30256d029", "full_name": "S. K. Sharma (Karnal In-Charge)", "centre_id": "CENTRE-01", "role": "operator"},
+    "ludhiana_op": {"id": "ADMIN-03", "username": "ludhiana_op", "email": "ludhiana.op@smartprocure.in", "password_hash": "05bb70924ec173d12d46eec9562725e24bcf84ec7100b7cb244e8c148967885b", "full_name": "Gurpreet Singh (Ludhiana In-Charge)", "centre_id": "CENTRE-02", "role": "operator"}
+}
+
+# In-memory store initialized with defaults
 _local_store = {
-    "farmers": {
-        "9876543210": {
-            "id": "FARMER-001",
-            "phone": "9876543210",
-            "full_name": "Ram Lal Verma",
-            "email": "farmer1@smartprocure.in",
-            "aadhaar_masked": "XXXX-XXXX-4921",
-            "kisan_id": "KISAN-HR-2026-08192",
-            "state": "Haryana",
-            "district": "Karnal",
-            "village": "Taraori",
-            "bank_account_no": "30918239012",
-            "bank_ifsc": "SBIN0001234",
-            "bank_name": "State Bank of India",
-            "upi_id": "ramlal@upi",
-            "document_url": f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/sample/doca_verification_sample.txt",
-            "created_at": datetime.datetime.now().isoformat()
-        },
-        "9812345678": {
-            "id": "FARMER-002",
-            "phone": "9812345678",
-            "full_name": "Baldev Singh Dhillon",
-            "email": "farmer2@smartprocure.in",
-            "aadhaar_masked": "XXXX-XXXX-8832",
-            "kisan_id": "KISAN-PB-2026-04128",
-            "state": "Punjab",
-            "district": "Ludhiana",
-            "village": "Sahnewal",
-            "bank_account_no": "50281923019",
-            "bank_ifsc": "PUNB0123400",
-            "bank_name": "Punjab National Bank",
-            "upi_id": "baldev@pnb",
-            "document_url": f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/sample/doca_verification_sample.txt",
-            "created_at": datetime.datetime.now().isoformat()
-        }
-    },
-    "admins": {
-        "admin": {"id": "ADMIN-01", "username": "admin", "email": "admin@smartprocure.in", "password_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", "full_name": "Super Admin (DoCA HQ)", "centre_id": None, "role": "superadmin"},
-        "karnal_op": {"id": "ADMIN-02", "username": "karnal_op", "email": "karnal.op@smartprocure.in", "password_hash": "0b7849e7b25203b57fa23eb41a10ec88863f6ebecdfa12b6a953e5e30256d029", "full_name": "S. K. Sharma (Karnal In-Charge)", "centre_id": "CENTRE-01", "role": "operator"},
-        "ludhiana_op": {"id": "ADMIN-03", "username": "ludhiana_op", "email": "ludhiana.op@smartprocure.in", "password_hash": "05bb70924ec173d12d46eec9562725e24bcf84ec7100b7cb244e8c148967885b", "full_name": "Gurpreet Singh (Ludhiana In-Charge)", "centre_id": "CENTRE-02", "role": "operator"}
-    },
+    "farmers": dict(DEFAULT_FARMERS),
+    "admins": dict(DEFAULT_ADMINS),
     "bookings": {},
     "procurements": {},
     "payments": {},
@@ -147,33 +124,26 @@ _local_store = {
     "desks": {d["id"]: dict(d) for d in DEFAULT_DESKS}
 }
 
-# =============================================================================
-# SUPABASE STORAGE HELPERS
-# =============================================================================
+_centres_cache = DEFAULT_CENTRES
+_crops_cache = DEFAULT_CROPS
+
+# ─── Storage Helpers ─────────────────────────────────────────────────────────
 def upload_document_to_storage(file_bytes: bytes, filename: str, content_type: str = "image/jpeg", folder: str = "documents") -> str:
-    """
-    Uploads a file to Supabase Storage bucket 'smartprocure-documents'
-    Returns the public URL of the uploaded asset.
-    """
+    """Uploads a file to Supabase Storage bucket 'smartprocure-documents'."""
     try:
         clean_name = f"{folder}/{uuid.uuid4().hex[:10]}_{filename}"
         supabase_admin.storage.from_(STORAGE_BUCKET).upload(
-            clean_name, 
-            file_bytes, 
-            file_options = {"upsert":"true", "content-type": content_type})
-
-        public_url = f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/{clean_name}"
-        return public_url
-
+            clean_name,
+            file_bytes,
+            file_options={"upsert": "true", "content-type": content_type}
+        )
+        return f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/{clean_name}"
     except Exception as e:
-        print(f"[SUPABASE STORAGE ERROR] Upload failed: {e}")
+        print(f"[SUPABASE STORAGE ERROR] {e}")
         return ""
 
-# =============================================================================
-# SUPABASE AUTH HELPERS
-# =============================================================================
 def verify_supabase_token(access_token: str):
-    """Verifies a Supabase Auth JWT token and returns user details."""
+    """Verifies a Supabase Auth JWT token."""
     if not access_token:
         return None
     try:
@@ -184,368 +154,169 @@ def verify_supabase_token(access_token: str):
         print(f"[SUPABASE AUTH] Token verify note: {e}")
     return None
 
-# In-memory fast catalog cache
-_centres_cache = DEFAULT_CENTRES
-_crops_cache = DEFAULT_CROPS
-
+# ─── Initializer & Catalog Sync ─────────────────────────────────────────────
 def sync_catalogs_from_supabase():
-    global _centres_cache, _crops_cache     # global is required to modify the outer scope variable
-
+    global _centres_cache, _crops_cache
     try:
-        res = supabase_admin.table("procurement_centres").select("*").eq('status', 'active').order("name").execute()
+        res = supabase_admin.table("procurement_centres").select("*").eq("status", "active").order("name").execute()
         if res.data and len(res.data) > 0:
             _centres_cache = res.data
-
     except Exception as e:
-        pass  # Keep using the default cache if Supabase fetch fails
+        print(f"[SUPABASE CENTRES SYNC] {e}")
 
     try:
         res = supabase_admin.table("crops_msp").select("*").order("crop_name").execute()
         if res.data and len(res.data) > 0:
             _crops_cache = res.data
-    except Exception:
-        pass
-
-def _init_sqlite_db():
-    """Initializes SQLite backup database tables and seeds initial catalog if empty."""
-
-    try:
-        conn = get_sqlite_con()
-        cursor = conn.cursor()
-
-        # Create tables if they don't exist
-
-        cursor.executescript("""
-            CREATE TABLE IF NOT EXISTS procurement_centres (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                code TEXT,
-                state TEXT,
-                district TEXT,
-                location_address TEXT,
-                pincode TEXT,
-                latitude REAL,
-                longitude REAL,
-                daily_capacity INTEGER,
-                active_counters INTEGER,
-                opening_time TEXT,
-                closing_time TEXT,
-                contact_phone TEXT,
-                status TEXT DEFAULT 'active'
-            );
-
-            CREATE TABLE IF NOT EXISTS crops_msp (
-                id TEXT PRIMARY KEY,
-                crop_name TEXT NOT NULL,
-                hindi_name TEXT,
-                category TEXT,
-                msp_rate_per_quintal REAL,
-                max_moisture_percentage REAL,
-                grade_a_bonus_per_quintal REAL,
-                deduction_per_excess_moisture REAL
-            );
-
-            CREATE TABLE IF NOT EXISTS counter_desks (
-                id TEXT PRIMARY KEY,
-                centre_id TEXT,
-                desk_number INTEGER,
-                desk_name TEXT,
-                desk_type TEXT,
-                operator_name TEXT,
-                status TEXT,
-                current_token TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS farmers (
-                id TEXT PRIMARY KEY,
-                phone TEXT UNIQUE,
-                full_name TEXT,
-                email TEXT,
-                aadhaar_masked TEXT,
-                kisan_id TEXT,
-                state TEXT,
-                district TEXT,
-                village TEXT,
-                bank_account_no TEXT,
-                bank_ifsc TEXT,
-                bank_name TEXT,
-                upi_id TEXT,
-                document_url TEXT,
-                created_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS slot_bookings (
-                id TEXT PRIMARY KEY,
-                booking_date TEXT,
-                time_slot TEXT,
-                centre_id TEXT,
-                crop_id TEXT,
-                farmer_id TEXT,
-                estimated_quantity_quintals REAL,
-                vehicle_number TEXT,
-                token_number TEXT,
-                booking_status TEXT,
-                check_in_time TEXT,
-                called_time TEXT,
-                completed_time TEXT,
-                assigned_desk_id TEXT,
-                created_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS procurement_records (
-                id TEXT PRIMARY KEY,
-                receipt_number TEXT UNIQUE,
-                booking_id TEXT,
-                token_number TEXT,
-                centre_id TEXT,
-                crop_id TEXT,
-                farmer_id TEXT,
-                gross_weight_kg REAL,
-                tare_weight_kg REAL,
-                net_weight_quintals REAL,
-                moisture_percentage REAL,
-                quality_grade TEXT,
-                msp_rate_applied REAL,
-                bonus_applied REAL,
-                penalty_applied REAL,
-                final_rate_per_quintal REAL,
-                total_payable_amount REAL,
-                operator_id TEXT,
-                document_url TEXT,
-                created_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS payment_transactions (
-                id TEXT PRIMARY KEY,
-                procurement_id TEXT,
-                farmer_id TEXT,
-                amount REAL,
-                bank_account_no TEXT,
-                bank_ifsc TEXT,
-                payment_status TEXT,
-                dbt_reference_utr TEXT,
-                credited_at TEXT,
-                remarks TEXT,
-                created_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS sms_audit_logs (
-                id TEXT PRIMARY KEY,
-                phone TEXT,
-                recipient_name TEXT,
-                notification_type TEXT,
-                message_text TEXT,
-                sent_at TEXT,
-                gateway_response TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS admins (
-                id TEXT PRIMARY KEY,
-                username TEXT UNIQUE,
-                email TEXT,
-                password_hash TEXT,
-                full_name TEXT,
-                centre_id TEXT,
-                role TEXT,
-                created_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS otp_sessions (
-                phone TEXT PRIMARY KEY,
-                otp_code TEXT,
-                expires_at TEXT,
-                used INTEGER DEFAULT 0
-            );
-        """)
-
-        # Seeds Centres if empty
-
-        if cursor.execute("SELECT COUNT(*) FROM procurement_centres").fetchone()[0] == 0:
-            for c in DEFAULT_CENTRES:
-                cursor.execute("""
-                    INSERT INTO procurement_centres (id, name, code, state, district, location_address, pincode, latitude, longitude, daily_capacity, active_counters, opening_time, closing_time, contact_phone, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (c['id'], c['name'], c['code'], c['state'], c['district'], c['location_address'], c['pincode'], c['latitude'], c['longitude'], c['daily_capacity'], c['active_counters'], c['opening_time'], c['closing_time'], c['contact_phone'], c['status']))
-
-                # the ? are placeholders for the values to be inserted, and the values are provided as a tuple in the second argument of cursor.execute().
-
-        # Seed Crops if empty
-        if cursor.execute("SELECT COUNT(*) FROM crops_msp").fetchone()[0] == 0:
-            for cr in DEFAULT_CROPS:
-                cursor.execute("""
-                    INSERT INTO crops_msp (id, crop_name, hindi_name, category, msp_rate_per_quintal, max_moisture_percentage, grade_a_bonus_per_quintal, deduction_per_excess_moisture)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (cr['id'], cr['crop_name'], cr['hindi_name'], cr['category'], cr['msp_rate_per_quintal'], cr['max_moisture_percentage'], cr['grade_a_bonus_per_quintal'], cr['deduction_per_excess_moisture']))
-
-        # Seed Desks if empty
-        if cursor.execute("SELECT COUNT(*) FROM counter_desks").fetchone()[0] == 0:
-            for d in DEFAULT_DESKS:
-                cursor.execute("""
-                    INSERT INTO counter_desks (id, centre_id, desk_number, desk_name, desk_type, operator_name, status, current_token)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (d['id'], d['centre_id'], d['desk_number'], d['desk_name'], d['desk_type'], d['operator_name'], d['status'], d.get('current_token')))
-
-        # Seed Admins if empty
-        if cursor.execute("SELECT COUNT(*) FROM admins").fetchone()[0] == 0:
-            for a in _local_store["admins"].values():
-                cursor.execute("""
-                    INSERT INTO admins (id, username, email, password_hash, full_name, centre_id, role, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (a['id'], a['username'], a['email'], a['password_hash'], a['full_name'], a.get('centre_id'), a['role'], datetime.datetime.now().isoformat()))
-
-        # Seed Farmers if empty
-        if cursor.execute("SELECT COUNT(*) FROM farmers").fetchone()[0] == 0:
-            for f in _local_store["farmers"].values():
-                cursor.execute("""
-                    INSERT INTO farmers (id, phone, full_name, email, aadhaar_masked, kisan_id, state, district, village, bank_account_no, bank_ifsc, bank_name, upi_id, document_url, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (f['id'], f['phone'], f['full_name'], f['email'], f['aadhaar_masked'], f['kisan_id'], f['state'], f['district'], f['village'], f['bank_account_no'], f['bank_ifsc'], f['bank_name'], f['upi_id'], f['document_url'], f['created_at']))
-
-        conn.commit()
-        conn.close()
-        print(f"[SQLITE DB] Backup database initialized successfully: {DB_FILE}")
     except Exception as e:
-        print(f"[SQLITE DB INIT NOTICE] {e}")
+        print(f"[SUPABASE CROPS SYNC] {e}")
 
 def init_db():
-    """Initializes local SQLite database backup and verifies Supabase connectivity."""
-    _init_sqlite_db()
-
-    def run_init():
-        try:
-            buckets = supabase_admin.storage.list_buckets()
-            names = [b.name for b in (buckets or [])]
-            if STORAGE_BUCKET not in names:
-                supabase_admin.storage.create_bucket(STORAGE_BUCKET, options={"public": True})
+    """Verifies Supabase connectivity, bucket existence, and seeds initial data."""
+    try:
+        buckets = supabase_admin.storage.list_buckets()
+        names = [b.name for b in (buckets or [])]
+        if STORAGE_BUCKET not in names:
+            supabase_admin.storage.create_bucket(STORAGE_BUCKET, options={"public": True})
+            print(f"[SUPABASE] Storage bucket '{STORAGE_BUCKET}' created.")
+        else:
             print(f"[SUPABASE] Storage bucket '{STORAGE_BUCKET}' verified.")
-        except Exception as e:
-            print(f"[SUPABASE NOTICE] Storage init: {e}")
+    except Exception as e:
+        print(f"[SUPABASE NOTICE] Storage init: {e}")
 
-        sync_catalogs_from_supabase()
+    # Seed default farmers into Supabase if empty
+    try:
+        res = supabase_admin.table("farmers").select("id").limit(1).execute()
+        if not res.data:
+            for f in DEFAULT_FARMERS.values():
+                supabase_admin.table("farmers").upsert(f, on_conflict="phone").execute()
+            print("[SUPABASE] Seeded default farmers into PostgreSQL.")
+    except Exception as e:
+        print(f"[SUPABASE SEED FARMERS NOTICE] {e}")
 
-    _async_sync(run_init)
+    # Seed default admins into Supabase if empty
+    try:
+        res = supabase_admin.table("admins").select("id").limit(1).execute()
+        if not res.data:
+            for a in DEFAULT_ADMINS.values():
+                supabase_admin.table("admins").upsert(a, on_conflict="username").execute()
+            print("[SUPABASE] Seeded default admins into PostgreSQL.")
+    except Exception as e:
+        print(f"[SUPABASE SEED ADMINS NOTICE] {e}")
 
+    sync_catalogs_from_supabase()
 
-# centreS
-
+# ─── Catalog Getters ────────────────────────────────────────────────────────
 def get_all_centres():
-    """Returns the list of all active procurement centres from cache."""
-    global _centres_cache       
-    return _centres_cache       
+    global _centres_cache
+    try:
+        res = supabase_admin.table("procurement_centres").select("*").eq("status", "active").order("name").execute()
+        if res.data:
+            _centres_cache = res.data
+    except Exception:
+        pass
+    return _centres_cache
 
 def get_centre_by_id(centre_id: str):
     centres = get_all_centres()
     return next((c for c in centres if c['id'] == centre_id), None)
 
-# CROPS / MSP
-
 def get_all_crops():
     global _crops_cache
+    try:
+        res = supabase_admin.table("crops_msp").select("*").order("crop_name").execute()
+        if res.data:
+            _crops_cache = res.data
+    except Exception:
+        pass
     return _crops_cache
 
-# ADMIN
-
+# ─── Admin Auth ─────────────────────────────────────────────────────────────
 def get_admin_by_username(username: str):
     try:
-        res = supabase_admin.table("admins").select("*").eq("username", username).single().execute()
-        if res.data:
-            return res.data
+        res = supabase_admin.table("admins").select("*").eq("username", username.lower()).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0]
     except Exception as e:
         print(f"[SUPABASE ADMIN FETCH ERROR] {e}")
     return _local_store["admins"].get(username.lower())
 
 def get_admin_by_id(admin_id: str):
+    try:
+        res = supabase_admin.table("admins").select("*").eq("id", admin_id).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0]
+    except Exception:
+        pass
     for a in _local_store["admins"].values():
         if a["id"] == admin_id:
             return a
     return None
 
-# OTP SESSIONS
-
-def upsert_otp_session(phone: str, otp_code: str, expires_at: datetime.datetime):
-    _local_store["otp_sessions"][phone] = {
-        "phone": phone,
-        "otp_code": otp_code,
-        "expires_at": expires_at,
-        "used": False
-    }
+# ─── OTP Sessions ───────────────────────────────────────────────────────────
+def upsert_otp_session(phone: str, otp_code: str, expires_at):
+    exp_str = expires_at.isoformat() if isinstance(expires_at, datetime.datetime) else str(expires_at)
+    rec = {"phone": phone, "otp_code": otp_code, "expires_at": exp_str, "used": False}
+    _local_store["otp_sessions"][phone] = rec
     try:
-        supabase_admin.table("otp_sessions").upsert({
-            "phone": phone,
-            "otp_code": otp_code,
-            "expires_at": expires_at.isoformat(),
-            "used": False
-        }, on_conflict="phone").execute()
+        supabase_admin.table("otp_sessions").upsert(rec, on_conflict="phone").execute()
     except Exception as e:
         print(f"[SUPABASE OTP UPSERT ERROR] {e}")
 
 def get_otp_session(phone: str):
     try:
-        res = supabase_admin.table("otp_sessions").select("*").eq("phone", phone).single().execute()
-        if res.data:
-            return res.data
-
+        res = supabase_admin.table("otp_sessions").select("*").eq("phone", phone).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0]
     except Exception as e:
         print(f"[SUPABASE OTP FETCH ERROR] {e}")
-
     return _local_store["otp_sessions"].get(phone)
 
 def mark_otp_session_used(phone: str):
     if phone in _local_store["otp_sessions"]:
         _local_store["otp_sessions"][phone]["used"] = True
-
     try:
         supabase_admin.table("otp_sessions").update({"used": True}).eq("phone", phone).execute()
-
     except Exception as e:
         print(f"[SUPABASE OTP UPDATE ERROR] {e}")
 
-# FARMERS
-
+# ─── Farmers ────────────────────────────────────────────────────────────────
 def get_farmer_by_phone(phone: str):
     try:
-        res = supabase_admin.table("farmers").select("*").eq("phone", phone).single().execute()
-        if res.data:
-            return res.data
+        res = supabase_admin.table("farmers").select("*").eq("phone", phone).execute()
+        if res.data and len(res.data) > 0:
+            _local_store["farmers"][phone] = res.data[0]
+            return res.data[0]
     except Exception as e:
         print(f"[SUPABASE FARMER FETCH ERROR] {e}")
-
     return _local_store["farmers"].get(phone)
 
 def get_farmer_by_id(farmer_id: str):
     try:
         res = supabase_admin.table("farmers").select("*").eq("id", farmer_id).execute()
-        if res.data:
+        if res.data and len(res.data) > 0:
             return res.data[0]
     except Exception:
         pass
-
     for f in _local_store["farmers"].values():
         if f["id"] == farmer_id:
             return f
     return None
-                
+
 def save_farmer(f: dict):
-    """Saves or updates farmer record in Supabase and local cache."""
+    """Saves or updates farmer record in Supabase PostgreSQL and local cache."""
     _local_store["farmers"][f["phone"]] = f
+    try:
+        supabase_admin.table("farmers").upsert(f, on_conflict="phone").execute()
+    except Exception as e:
+        print(f"[SUPABASE FARMER UPSERT NOTICE] {e}")
 
-    def _do():
-        try:
-            payload = {k: v for k, v in f.items()}
-            supabase_admin.table("farmers").upsert(payload, on_conflict="phone").execute()      # upsert is used to insert or update the record based on the phone number
-
-        except Exception as e:
-            print(f"[SUPABASE] Farmer upsert notice: {e}")
-
-        _async_sync.do()
-    
-# SLOTS
-
+# ─── Slots & Bookings ───────────────────────────────────────────────────────
 def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
     centre = get_centre_by_id(centre_id)
     raw_daily_cap = centre.get("daily_capacity", 60) if isinstance(centre, dict) else 60
     daily_cap = raw_daily_cap if isinstance(raw_daily_cap, (int, float)) else 60
-    slot_cap = max(1, int(daily_cap) // 6)  
+    slot_cap = max(1, int(daily_cap) // 6)
 
     slot_labels = [
         "08:30 – 09:30", "09:30 – 10:30", "10:30 – 11:30",
@@ -553,11 +324,18 @@ def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
     ]
 
     booked_counts = {}
-
-    for b in _local_store["bookings"].values():
-        if b.get("centre_id") == centre_id and b.get("booking_date") == booking_date and b.get("booking_status") != "cancelled":
-            sl = b.get("time_slot")
-            booked_counts[sl] = booked_counts.get(sl, 0) + 1
+    try:
+        res = supabase_admin.table("slot_bookings").select("time_slot").eq("centre_id", centre_id).eq("booking_date", booking_date).neq("booking_status", "cancelled").execute()
+        if res.data:
+            for row in res.data:
+                sl = row.get("time_slot")
+                if sl:
+                    booked_counts[sl] = booked_counts.get(sl, 0) + 1
+    except Exception:
+        for b in _local_store["bookings"].values():
+            if b.get("centre_id") == centre_id and b.get("booking_date") == booking_date and b.get("booking_status") != "cancelled":
+                sl = b.get("time_slot")
+                booked_counts[sl] = booked_counts.get(sl, 0) + 1
 
     return [
         {
@@ -569,80 +347,83 @@ def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
         for sl in slot_labels
     ]
 
-
-# SLOT BOOKINGS
-
 def get_booking_count_by_date(centre_id: str, booking_date: str) -> int:
-    count = sum(1 for b in _local_store["bookings"].values() if b.get("centre_id") == centre_id and b.get("booking_date") == booking_date and b.get("booking_status") != "cancelled")
-    return count
+    try:
+        res = supabase_admin.table("slot_bookings").select("id", count="exact").eq("centre_id", centre_id).eq("booking_date", booking_date).neq("booking_status", "cancelled").execute()
+        if res.count is not None:
+            return res.count
+    except Exception:
+        pass
+    return sum(1 for b in _local_store["bookings"].values() if b.get("centre_id") == centre_id and b.get("booking_date") == booking_date and b.get("booking_status") != "cancelled")
 
 def insert_booking(b: dict):
-    """Inserts multiple bookings into Supabase and local cache."""
-
     _local_store["bookings"][b["id"]] = b
-
-    def _do():
-        try:
-            supabase_admin.table("slot_bookings").insert(b).execute()
-        except Exception as e:
-            print(f"[SUPABASE] Booking insert notice: {e}")
-
-    _async_sync(_do)
+    try:
+        supabase_admin.table("slot_bookings").insert(b).execute()
+    except Exception as e:
+        print(f"[SUPABASE BOOKING INSERT NOTICE] {e}")
 
 def update_booking_check_in(booking_id: str, check_in_time: str):
-    """Updates the check-in time of a booking in Supabase and local cache."""
     if booking_id in _local_store["bookings"]:
         _local_store["bookings"][booking_id]["booking_status"] = "checked_in"
         _local_store["bookings"][booking_id]["check_in_time"] = check_in_time
-
-    def _do():
-        try:
-            supabase_admin.table("slot_bookings").update({
-                "check_in_time": check_in_time,
-                "booking_status": "checked_in"
-            }).eq("id", booking_id).execute()
-        except Exception:
-            pass
-
-    _async_sync(_do)
+    try:
+        supabase_admin.table("slot_bookings").update({
+            "check_in_time": check_in_time,
+            "booking_status": "checked_in"
+        }).eq("id", booking_id).execute()
+    except Exception as e:
+        print(f"[SUPABASE CHECK-IN NOTICE] {e}")
 
 def get_booking_by_id_or_token(query_val: str):
-    # check _local_store first
-    for b in _local_store["bookings"].values():
-        if b.get("id") == query_val or b.get("token_number") == query_val:
-            flat = dict(b)
-            farmer = get_farmer_by_id(flat.get("farmer_id")) or {}
-            crop = next((c for c in get_all_crops() if c["id"] == b.get("crop_id")), {})
-            centre = get_centre_by_id(b.get("centre_id")) or {}
-            desk = get_desk_by_id(b.get("assigned_desk_id")) or {}
+    raw_b = None
+    try:
+        res = supabase_admin.table("slot_bookings").select("*").or_(f"id.eq.{query_val},token_number.eq.{query_val}").execute()
+        if res.data and len(res.data) > 0:
+            raw_b = res.data[0]
+    except Exception:
+        pass
 
-            flat["farmer_name"] = farmer.get("full_name")
-            flat["farmer_phone"] = farmer.get("phone")
-            flat["kisan_id"] = farmer.get("kisan_id")
-            flat["aadhaar_masked"] = farmer.get("aadhaar_masked")
-            flat["crop_name"] = crop.get("crop_name")
-            flat["crop_hindi"] = crop.get("hindi_name")
-            flat["msp_rate_per_quintal"] = crop.get("msp_rate_per_quintal", 2425.0)
-            flat["centre_name"] = centre.get("name")
-            flat["desk_name"] = desk.get("desk_name")
-            return flat
+    if not raw_b:
+        for b in _local_store["bookings"].values():
+            if b.get("id") == query_val or b.get("token_number") == query_val:
+                raw_b = dict(b)
+                break
 
-    return None
+    if not raw_b:
+        return None
+
+    flat = dict(raw_b)
+    farmer = get_farmer_by_id(flat.get("farmer_id")) or {}
+    crop = next((c for c in get_all_crops() if c["id"] == flat.get("crop_id")), {})
+    centre = get_centre_by_id(flat.get("centre_id")) or {}
+    desk = get_desk_by_id(flat.get("assigned_desk_id")) or {}
+
+    flat["farmer_name"] = farmer.get("full_name")
+    flat["farmer_phone"] = farmer.get("phone")
+    flat["kisan_id"] = farmer.get("kisan_id")
+    flat["aadhaar_masked"] = farmer.get("aadhaar_masked")
+    flat["crop_name"] = crop.get("crop_name")
+    flat["crop_hindi"] = crop.get("hindi_name")
+    flat["msp_rate_per_quintal"] = crop.get("msp_rate_per_quintal", 2425.0)
+    flat["centre_name"] = centre.get("name")
+    flat["desk_name"] = desk.get("desk_name")
+    return flat
 
 def get_booking_by_token(token_number: str):
     return get_booking_by_id_or_token(token_number)
 
-# FARMERS — Full booking history + payment join
-
+# ─── Farmer Bookings History ────────────────────────────────────────────────
 def get_farmer_bookings(phone: str = None, token: str = None):
     if token:
         flat = get_booking_by_id_or_token(token)
         if not flat:
             return None
-
-        # check procurement
-        for p in _local_store["procurements"].values():
-            if p.get("booking_id") == flat.get("id") or p.get("token_number") == flat.get("token_number"):
+        # Join procurement details
+        try:
+            p_res = supabase_admin.table("procurement_records").select("*").or_(f"booking_id.eq.{flat['id']},token_number.eq.{flat['token_number']}").execute()
+            if p_res.data and len(p_res.data) > 0:
+                p = p_res.data[0]
                 flat.update({
                     "receipt_number": p.get("receipt_number"),
                     "net_weight_quintals": p.get("net_weight_quintals"),
@@ -651,14 +432,28 @@ def get_farmer_bookings(phone: str = None, token: str = None):
                     "total_payable_amount": p.get("total_payable_amount"),
                     "document_url": p.get("document_url")
                 })
-
-                # check payment
-                for pt in _local_store["payments"].values():
-                    if pt.get("procurement_id") == p.get("id"):
-                        flat["payment_status"] = pt.get("payment_status")
-                        flat["dbt_reference_utr"] = pt.get("dbt_reference_utr")
-                        break
-                break
+                pt_res = supabase_admin.table("payment_transactions").select("*").eq("procurement_id", p.get("id")).execute()
+                if pt_res.data and len(pt_res.data) > 0:
+                    pt = pt_res.data[0]
+                    flat["payment_status"] = pt.get("payment_status")
+                    flat["dbt_reference_utr"] = pt.get("dbt_reference_utr")
+        except Exception:
+            for p in _local_store["procurements"].values():
+                if p.get("booking_id") == flat.get("id") or p.get("token_number") == flat.get("token_number"):
+                    flat.update({
+                        "receipt_number": p.get("receipt_number"),
+                        "net_weight_quintals": p.get("net_weight_quintals"),
+                        "moisture_percentage": p.get("moisture_percentage"),
+                        "quality_grade": p.get("quality_grade"),
+                        "total_payable_amount": p.get("total_payable_amount"),
+                        "document_url": p.get("document_url")
+                    })
+                    for pt in _local_store["payments"].values():
+                        if pt.get("procurement_id") == p.get("id"):
+                            flat["payment_status"] = pt.get("payment_status")
+                            flat["dbt_reference_utr"] = pt.get("dbt_reference_utr")
+                            break
+                    break
         return flat
 
     if phone:
@@ -666,12 +461,40 @@ def get_farmer_bookings(phone: str = None, token: str = None):
         if not farmer:
             return []
 
+        bookings_list = []
+        try:
+            res = supabase_admin.table("slot_bookings").select("*").eq("farmer_id", farmer.get("id")).order("created_at", desc=True).execute()
+            if res.data:
+                bookings_list = res.data
+        except Exception:
+            pass
+
+        if not bookings_list:
+            bookings_list = [b for b in _local_store["bookings"].values() if b.get("farmer_id") == farmer.get("id")]
+
         results = []
-        for b in _local_store["bookings"].values():
-            if b.get("farmer_id") == farmer.get("id"):
-                flat = get_booking_by_id_or_token(b.get("id"))
-                if flat:
-                    # Enrich with procurement and payment details
+        for b in bookings_list:
+            flat = get_booking_by_id_or_token(b.get("id"))
+            if flat:
+                # Check procurement details from Supabase / local
+                try:
+                    p_res = supabase_admin.table("procurement_records").select("*").eq("booking_id", flat["id"]).execute()
+                    if p_res.data and len(p_res.data) > 0:
+                        p = p_res.data[0]
+                        flat.update({
+                            "receipt_number": p.get("receipt_number"),
+                            "net_weight_quintals": p.get("net_weight_quintals"),
+                            "moisture_percentage": p.get("moisture_percentage"),
+                            "quality_grade": p.get("quality_grade"),
+                            "total_payable_amount": p.get("total_payable_amount"),
+                            "document_url": p.get("document_url")
+                        })
+                        pt_res = supabase_admin.table("payment_transactions").select("*").eq("procurement_id", p.get("id")).execute()
+                        if pt_res.data and len(pt_res.data) > 0:
+                            pt = pt_res.data[0]
+                            flat["payment_status"] = pt.get("payment_status")
+                            flat["dbt_reference_utr"] = pt.get("dbt_reference_utr")
+                except Exception:
                     for p in _local_store["procurements"].values():
                         if p.get("booking_id") == flat.get("id"):
                             flat.update({
@@ -682,32 +505,60 @@ def get_farmer_bookings(phone: str = None, token: str = None):
                                 "total_payable_amount": p.get("total_payable_amount"),
                                 "document_url": p.get("document_url")
                             })
-
-                            # check payment
                             for pt in _local_store["payments"].values():
                                 if pt.get("procurement_id") == p.get("id"):
                                     flat["payment_status"] = pt.get("payment_status")
                                     flat["dbt_reference_utr"] = pt.get("dbt_reference_utr")
                                     break
                             break
-                        results.append(flat)
+                results.append(flat)
         return results
 
     return []
 
-# LIVE QUEUE
-
+# ─── Live Queue ─────────────────────────────────────────────────────────────
 def get_live_queue_for_centre(centre_id: str):
     today = datetime.date.today().isoformat()
-    desks = [dict(d) for d in _local_store["desks"].values() if d.get("centre_id") == centre_id]
+    desks = []
+    try:
+        res = supabase_admin.table("counter_desks").select("*").eq("centre_id", centre_id).execute()
+        if res.data:
+            desks = res.data
+    except Exception:
+        pass
+    if not desks:
+        desks = [dict(d) for d in _local_store["desks"].values() if d.get("centre_id") == centre_id]
     if not desks:
         desks = [dict(d) for d in DEFAULT_DESKS if d.get("centre_id") == centre_id]
 
+    raw_queue = []
+    try:
+        res = supabase_admin.table("slot_bookings").select("*").eq("centre_id", centre_id).eq("booking_date", today).execute()
+        if res.data:
+            raw_queue = res.data
+    except Exception:
+        pass
+
+    if not raw_queue:
+        raw_queue = [b for b in _local_store["bookings"].values() if b.get("centre_id") == centre_id and b.get("booking_date") == today]
+
     queue = []
-    for b in _local_store["bookings"].values():
-        if b.get("centre_id") == centre_id and b.get("booking_date") == today:
-            flat = get_booking_by_id_or_token(b.get("id"))
-            if flat:
+    for b in raw_queue:
+        flat = get_booking_by_id_or_token(b.get("id"))
+        if flat:
+            try:
+                p_res = supabase_admin.table("procurement_records").select("*").eq("booking_id", flat["id"]).execute()
+                if p_res.data and len(p_res.data) > 0:
+                    p = p_res.data[0]
+                    flat["receipt_number"] = p.get("receipt_number")
+                    flat["net_weight_quintals"] = p.get("net_weight_quintals")
+                    flat["total_payable_amount"] = p.get("total_payable_amount")
+                    pt_res = supabase_admin.table("payment_transactions").select("*").eq("procurement_id", p.get("id")).execute()
+                    if pt_res.data and len(pt_res.data) > 0:
+                        pt = pt_res.data[0]
+                        flat["payment_status"] = pt.get("payment_status")
+                        flat["dbt_reference_utr"] = pt.get("dbt_reference_utr")
+            except Exception:
                 for p in _local_store["procurements"].values():
                     if p.get("booking_id") == flat.get("id"):
                         flat["receipt_number"] = p.get("receipt_number")
@@ -719,10 +570,9 @@ def get_live_queue_for_centre(centre_id: str):
                                 flat["dbt_reference_utr"] = pt.get("dbt_reference_utr")
                                 break
                         break
-                queue.append(flat)
+            queue.append(flat)
 
-    queue.sort(key=lambda x: x.get("token_number",""))
-
+    queue.sort(key=lambda x: x.get("token_number", ""))
     completed_today = len([b for b in queue if b.get("booking_status") == "completed"])
     live_active = [b for b in queue if b.get("booking_status") in ("checked_in", "called")]
 
@@ -737,11 +587,16 @@ def get_live_queue_for_centre(centre_id: str):
         "upcoming_count": len([b for b in queue if b.get("booking_status") == "booked"])
     }
 
-# DESKS
-
+# ─── Desks Operations ───────────────────────────────────────────────────────
 def get_desk_by_id(desk_id: str):
     if not desk_id:
         return None
+    try:
+        res = supabase_admin.table("counter_desks").select("*").eq("id", desk_id).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0]
+    except Exception:
+        pass
     return _local_store["desks"].get(desk_id) or next((d for d in DEFAULT_DESKS if d["id"] == desk_id), None)
 
 def assign_desk_token(booking_id: str, token_number: str, desk_id: str, called_time: str):
@@ -755,25 +610,22 @@ def assign_desk_token(booking_id: str, token_number: str, desk_id: str, called_t
         _local_store["desks"][desk_id]["status"] = "active"
         _local_store["desks"][desk_id]["updated_at"] = called_time
 
-    def _do():
-        try:
-            supabase_admin.table("slot_bookings").update({
-                "booking_status": "called",
-                "called_time": called_time,
-                "assigned_desk_id": desk_id
-            }).eq("id", booking_id).execute()
+    try:
+        supabase_admin.table("slot_bookings").update({
+            "booking_status": "called",
+            "called_time": called_time,
+            "assigned_desk_id": desk_id
+        }).eq("id", booking_id).execute()
 
-            supabase_admin.table("counter_desks").update({
-                "current_token": token_number,
-                "status": "active",
-                "updated_at": called_time
-            }).eq("id", desk_id).execute()
-        except Exception as e:
-            print(f"[SUPABASE] Desk assign notice: {e}")
-    _async_sync(_do)
+        supabase_admin.table("counter_desks").update({
+            "current_token": token_number,
+            "status": "active",
+            "updated_at": called_time
+        }).eq("id", desk_id).execute()
+    except Exception as e:
+        print(f"[SUPABASE DESK ASSIGN NOTICE] {e}")
 
-# PROCUREMENT RECORDS
-
+# ─── Procurement Records ────────────────────────────────────────────────────
 def insert_procurement_record(p: dict, booking_id: str, desk_id: str, completed_time: str):
     _local_store["procurements"][p["id"]] = p
 
@@ -786,42 +638,40 @@ def insert_procurement_record(p: dict, booking_id: str, desk_id: str, completed_
         _local_store["desks"][desk_id]["status"] = "idle"
         _local_store["desks"][desk_id]["updated_at"] = completed_time
 
-    def _do():
-        try:
-            supabase_admin.table("procurement_records").insert(p).execute()
-            supabase_admin.table("slot_bookings").update({
-                "booking_status": "completed",
-                "completed_time": completed_time
-            }).eq("id", booking_id).execute()
-            if desk_id:
-                supabase_admin.table("counter_desks").update({
-                    "current_token": None,
-                    "status": "idle",
-                    "updated_at": completed_time
-                }).eq("id", desk_id).execute()
-        except Exception as e:
-            print(f"[SUPABASE] Procurement record notice: {e}")
-    _async_sync(_do)
+    try:
+        supabase_admin.table("procurement_records").insert(p).execute()
+        supabase_admin.table("slot_bookings").update({
+            "booking_status": "completed",
+            "completed_time": completed_time
+        }).eq("id", booking_id).execute()
+        if desk_id:
+            supabase_admin.table("counter_desks").update({
+                "current_token": None,
+                "status": "idle",
+                "updated_at": completed_time
+            }).eq("id", desk_id).execute()
+    except Exception as e:
+        print(f"[SUPABASE PROCUREMENT NOTICE] {e}")
 
 def get_procurement_by_receipt(receipt_number: str):
+    try:
+        res = supabase_admin.table("procurement_records").select("*").eq("receipt_number", receipt_number).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0]
+    except Exception:
+        pass
     for p in _local_store["procurements"].values():
         if p.get("receipt_number") == receipt_number:
             return p
-
     return None
 
-# PAYMENT TRANSACTIONS (DBT)
-
+# ─── Payments / DBT ────────────────────────────────────────────────────────
 def create_payment_txn(t: dict):
     _local_store["payments"][t["id"]] = t
-
-    def _do():
-        try:
-            supabase_admin.table("payment_transactions").insert(t).execute()
-        except Exception as e:
-            print(f"[SUPABASE] Payment txn notice: {e}")
-
-    _async_sync(_do)
+    try:
+        supabase_admin.table("payment_transactions").insert(t).execute()
+    except Exception as e:
+        print(f"[SUPABASE PAYMENT TXN NOTICE] {e}")
 
 def update_payment_credited(procurement_id: str, utr: str, credited_at: str):
     for pt in _local_store["payments"].values():
@@ -831,48 +681,36 @@ def update_payment_credited(procurement_id: str, utr: str, credited_at: str):
             pt["credited_at"] = credited_at
             pt["remarks"] = "Direct Benefit Transfer credited successfully to farmer bank account."
             break
+    try:
+        supabase_admin.table("payment_transactions").update({
+            "payment_status": "credited",
+            "dbt_reference_utr": utr,
+            "credited_at": credited_at,
+            "remarks": "Direct Benefit Transfer credited successfully to farmer bank account."
+        }).eq("procurement_id", procurement_id).execute()
+    except Exception as e:
+        print(f"[SUPABASE PAYMENT CREDITED NOTICE] {e}")
 
-    def _do():
-        try:
-            supabase_admin.table("payment_transactions").update({
-                "payment_status": "credited",
-                "dbt_reference_utr": utr,
-                "credited_at": credited_at,
-                "remarks": "Direct Benefit Transfer credited successfully to farmer bank account."
-            }).eq("procurement_id", procurement_id).execute()
-        except Exception as e:
-            print(f"[SUPABASE] Payment credited notice: {e}")
-    _async_sync(_do)
-
-# SMS AUDIT LOG
-
+# ─── SMS Logs ───────────────────────────────────────────────────────────────
 def log_sms(sms_record: dict):
-    def _do():
-        try:
-            supabase_admin.table("sms_audit_logs").insert(sms_record).execute()
-
-        except Exception:
-            pass
-
-    _async_sync(_do)
+    try:
+        supabase_admin.table("sms_audit_logs").insert(sms_record).execute()
+    except Exception as e:
+        print(f"[SUPABASE SMS LOG NOTICE] {e}")
 
 def get_sms_logs(phone: str = None, limit: int = 50):
     try:
         q = supabase_admin.table("sms_audit_logs").select("*").order("sent_at", desc=True).limit(limit)
         if phone:
             q = q.eq("phone", phone)
-
         res = q.execute()
         if res.data:
             return res.data
-
     except Exception:
         pass
-
     return []
 
-# ANALYTICS
-
+# ─── Analytics Summary ──────────────────────────────────────────────────────
 def get_analytic_summary():
     total_farmers = len(_local_store["farmers"])
     total_bookings = len(_local_store["bookings"])
@@ -880,6 +718,27 @@ def get_analytic_summary():
     total_qtl = sum(p.get("net_weight_quintals", 0.0) for p in procurements)
     total_payout = sum(p.get("total_payable_amount", 0.0) for p in procurements)
     dbt_count = sum(1 for pt in _local_store["payments"].values() if pt.get("payment_status") == "credited")
+
+    try:
+        f_cnt = supabase_admin.table("farmers").select("id", count="exact").execute()
+        if f_cnt.count is not None and f_cnt.count > 0:
+            total_farmers = f_cnt.count
+
+        b_cnt = supabase_admin.table("slot_bookings").select("id", count="exact").execute()
+        if b_cnt.count is not None and b_cnt.count > 0:
+            total_bookings = b_cnt.count
+
+        p_res = supabase_admin.table("procurement_records").select("*").execute()
+        if p_res.data:
+            procurements = p_res.data
+            total_qtl = sum(p.get("net_weight_quintals", 0.0) for p in procurements)
+            total_payout = sum(p.get("total_payable_amount", 0.0) for p in procurements)
+
+        pt_res = supabase_admin.table("payment_transactions").select("id", count="exact").eq("payment_status", "credited").execute()
+        if pt_res.count is not None:
+            dbt_count = pt_res.count
+    except Exception as e:
+        print(f"[SUPABASE ANALYTICS NOTICE] {e}")
 
     return {
         "total_registered_farmers": total_farmers,

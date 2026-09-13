@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
 from flask_cors import CORS
 import hashlib
 import uuid
 import datetime
+import random
+import json
+import time
 from config import Config
 from sms import send_sms
 from database import (
@@ -13,16 +16,16 @@ from database import (
     get_desk_by_id, assign_desk_token, insert_procurement_record, create_payment_txn,
     get_procurement_by_receipt, update_payment_credited, get_farmer_bookings,
     get_admin_by_username, upsert_otp_session, get_otp_session, mark_otp_session_used,
-    get_sms_logs as db_get_sms_logs, get_analytic_summary,
-    upload_document_to_storage, verify_supabase_token
+    get_sms_logs as db_get_sms_logs, get_analytic_summary, get_analytic_summary,
+    upload_document_to_storage, verify_supabase_token, STORAGE_BUCKET
 )
 
 
-app=Flask(__name__)
+app = Flask(__name__)
 app.config.from_object(Config)
 CORS(app)
 
-# Initialize Supabase connection verification on startup
+# Initialize Supabase connection & storage on startup
 try:
     init_db()
 except Exception as e:
@@ -61,7 +64,6 @@ def admin_dashboard():
     centres = get_all_centres()
     crops = get_all_crops()
     return render_template('admin_dashboard.html', config=Config, centres=centres, crops=crops)
-
 
 # Legacy routes — keep working for backward compatibility
 @app.route('/farmer')
@@ -149,31 +151,30 @@ def admin_login_api():
     if admin_data.get("centre_id"):
         centre = get_centre_by_id(admin_data['centre_id'])
         if centre:
-            admin_data['centre_name'] = centre.get(name)
+            admin_data['centre_name'] = centre.get('name')
 
-    return jsonify({"success": True, "admin": admin_data, message: "Login successful"})
+    return jsonify({"success": True, "admin": admin_data, "message": "Login successful"})
 
 # 1. Authentication Endpoints (Farmer Mobile OTP via Fast2SMS)
 
-@app.route('/api/auth/send-otp', methods = ['POST'])
+@app.route('/api/auth/send-otp', methods=['POST'])
 def send_otp():
     data = request.json or {}
     phone = data.get('phone', '').strip()
     if not phone or len(phone) < 10:
-        return jsonify({"success": False, "error": "Please enter a valid 10-digit monile number"}), 400
+        return jsonify({"success": False, "error": "Please enter a valid 10-digit mobile number"}), 400
 
     if phone in ['9876543210', '9812345678', '9425123456']:
         otp = '1234'
     else:
-        # otp from fast2sms
-        pass
-        
+        otp = str(random.randint(1000, 9999))
+
     expiry_time = (datetime.datetime.now() + datetime.timedelta(minutes=Config.OTP_EXPIRY_MINUTES)).isoformat()
 
     try:
         upsert_otp_session(phone, otp, expiry_time)
     except Exception as e:
-        print(f"Failed to store OTP session in Supabase: {e}")
+        print(f"Failed to store OTP session: {e}")
 
     farmer = get_farmer_by_phone(phone)
     farmer_name = farmer["full_name"] if farmer else "Farmer"
@@ -202,15 +203,15 @@ def send_otp():
 @app.route('/api/auth/verify-otp', methods=['POST'])
 def verify_otp():
     data = request.json or {}
-    phone = data.get('phone','').strip()
-    otp = data.get('otp','').strip()
+    phone = data.get('phone', '').strip()
+    otp = data.get('otp', '').strip()
 
     if not phone or not otp:
         return jsonify({"success": False, "error": "Phone and OTP are required"}), 400
 
     # Demo hardcoded bypasses
     is_valid = False
-    if otp=='7469' and phone in ['9876543210', '9812345678', '9425123456']:
+    if otp in ['1234', '7469'] and phone in ['9876543210', '9812345678', '9425123456']:
         is_valid = True
 
     else:
@@ -227,7 +228,7 @@ def verify_otp():
             print(f"Error checking OTP session: {e}")
 
     if not is_valid:
-        return jsonify({"success": False, "error": "Incorrect OTP"}), 400
+        return jsonify({"success": False, "error": "Incorrect or expired OTP"}), 400
 
     farmer = get_farmer_by_phone(phone)
     if farmer:
@@ -269,22 +270,22 @@ def farmer_login_direct():
     phone = data.get('phone', '').strip()
     email = data.get('email', '').strip()
     token = data.get('access_token', '').strip()
-    
+
     # If Supabase Auth token provided, verify it
     if token:
         user = verify_supabase_token(token)
         if user and user.user_metadata:
             phone = user.user_metadata.get('phone', phone)
             email = user.email or email
-            
+
     if not phone and not email:
         return jsonify({"success": False, "error": "Phone or email required"}), 400
-        
+
     farmer = get_farmer_by_phone(phone) if phone else None
 
     if farmer:
         return jsonify({"success": True, "farmer": farmer, "message": "Farmer authenticated successfully"})
-    return jsonify({"success":False, "error": "Farmer profile not found. Please register."}), 404
+    return jsonify({"success": False, "error": "Farmer profile not found. Please register."}), 404
 
 @app.route('/api/auth/register-farmer', methods=['POST'])
 def register_farmer():
@@ -367,9 +368,8 @@ def get_slots():
     if not centre_id:
         return jsonify({"success": False, "error": "centre_id is required"}), 400
 
-    slots = get_slots_for_date_and_centre(centre_id, date_str)
-    return jsonify({"success": True, "centre_id": centre_id, "date": date_str, "slots": slots})
-
+    slots = get_slots_for_date_and_centre(centre_id, booking_date)
+    return jsonify({"success": True, "centre_id": centre_id, "date": booking_date, "slots": slots})
 
 # 4. Slot Booking & Token Allocation
 @app.route('/api/bookings', methods=['POST'])
@@ -728,10 +728,22 @@ def get_sms_logs():
 @app.route('/api/analytics/summary', methods=['GET'])
 def analytics_summary():
     try:
-        metrics = get_analytics_summary()
+        metrics = get_analytic_summary()
         return jsonify({"success": True, "metrics": metrics})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+# 13. Server-Sent Events (SSE) Stream for Queue Announcements
+@app.route('/api/queue/stream')
+def queue_stream():
+    """SSE endpoint for real-time queue updates and voice announcements."""
+    def event_stream():
+        yield f"data: {json.dumps({'event': 'connected', 'data': {'time': datetime.datetime.now().isoformat()}})}\n\n"
+        while True:
+            time.sleep(15)
+            yield f"data: {json.dumps({'event': 'ping', 'data': {'time': datetime.datetime.now().isoformat()}})}\n\n"
+
+    return Response(event_stream(), mimetype="text/event-stream")
 
 
 if __name__ == '__main__':
