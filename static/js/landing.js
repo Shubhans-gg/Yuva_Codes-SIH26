@@ -85,14 +85,22 @@ function initMap() {
   }
 
   leafletMap = L.map('leaflet-map', {
-    scrollWheelZoom: !isMobile, // Prevents gesture trapping on mobile scroll
+    scrollWheelZoom: !isMobile,
     touchZoom: true
-  }).setView([22.5, 80.5], 5);
+  }).setView([22.5, 78.9], 5);
 
+  // 100% Free OpenStreetMap tile layer (No API key, No watermarks)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 18
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19
   }).addTo(leafletMap);
+
+  // Trigger map resize recalculations
+  [100, 300, 800, 1500].forEach(delay => {
+    setTimeout(() => {
+      if (leafletMap) leafletMap.invalidateSize();
+    }, delay);
+  });
 
   // Custom green marker icon
   const greenIcon = L.divIcon({
@@ -108,34 +116,142 @@ function initMap() {
   });
 
   // Plot all centres from server-side data
-  if (typeof CENTRES_DATA !== 'undefined') {
-    CENTRES_DATA.forEach(centre => {
-      if (!centre.latitude || !centre.longitude) return;
+  renderCentresMapAndList(typeof CENTRES_DATA !== 'undefined' ? CENTRES_DATA : []);
 
-      const marker = L.marker([centre.latitude, centre.longitude], { icon: greenIcon })
-        .addTo(leafletMap)
-        .bindPopup(`
-          <div class="map-popup-content">
-            <div class="map-popup-name">🌾 ${centre.name}</div>
-            <div class="map-popup-addr">📍 ${centre.location_address}</div>
-            <div class="map-popup-caps">
-              ${centre.daily_capacity} slots/day &nbsp;•&nbsp;
-              ${centre.active_counters} counters &nbsp;•&nbsp;
-              ${centre.opening_time} – ${centre.closing_time}
-            </div>
-            <div style="margin-top: 0.5rem;">
-              <a href="/farmer/login" style="
-                background: #16a34a; color: white; padding: 0.35rem 0.8rem;
-                border-radius: 0.4rem; font-size: 0.75rem; font-weight: 700;
-                text-decoration: none; display: inline-block;
-              ">📋 Book Slot Here</a>
-            </div>
-          </div>
-        `);
-
-      leafletMarkers.push({ id: centre.id, marker, centre });
-    });
+  // Auto-fit map bounds to encompass all centres
+  if (leafletMarkers.length > 0) {
+    const group = L.featureGroup(leafletMarkers.map(m => m.marker));
+    leafletMap.fitBounds(group.getBounds().pad(0.15));
   }
+
+}
+
+function renderCentresMapAndList(centresList, userLat = null, userLng = null) {
+  if (!leafletMap) return;
+
+  // Clear existing markers
+  leafletMarkers.forEach(m => leafletMap.removeLayer(m.marker));
+  leafletMarkers = [];
+
+  const greenIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: white; font-size: 1.1rem; width: 36px; height: 36px;
+      border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    "><span style="transform: rotate(45deg);">🌾</span></div>`,
+    iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -36]
+  });
+
+  const listContainer = document.getElementById('centres-list-container');
+  if (listContainer) {
+    listContainer.innerHTML = '';
+  }
+
+  const countBadge = document.getElementById('centres-count-badge');
+  if (countBadge) countBadge.textContent = `${centresList.length} centres`;
+
+  const mobCount = document.getElementById('mob-centre-count');
+  if (mobCount) mobCount.textContent = centresList.length;
+
+  centresList.forEach((centre, index) => {
+    if (!centre.latitude || !centre.longitude) return;
+
+    const gmapsUrl = centre.google_maps_url || `https://www.google.com/maps/dir/?api=1&destination=${centre.latitude},${centre.longitude}`;
+    const distText = centre.distance_km != null ? `⚡ ${centre.distance_km} km away` : '';
+    const waitText = centre.estimated_wait_mins ? `🟢 Wait: ${centre.estimated_wait_mins}` : '🟢 Low Queue';
+
+    // 1. Leaflet Marker & Popup
+    const popupHtml = `
+      <div class="map-popup-content">
+        <div class="map-popup-name">🌾 ${centre.name}</div>
+        <div class="map-popup-addr">📍 ${centre.location_address}</div>
+        ${distText ? `<div style="font-size: 0.75rem; font-weight: 700; color: #0284c7; margin: 0.2rem 0;">${distText}</div>` : ''}
+        <div class="map-popup-caps">
+          ${centre.daily_capacity} slots/day &nbsp;•&nbsp;
+          ${centre.active_counters} counters &nbsp;•&nbsp;
+          ${centre.opening_time} – ${centre.closing_time}
+        </div>
+        <div style="margin-top: 0.6rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
+          <a href="${gmapsUrl}" target="_blank" style="
+            background: #1e293b; color: #38bdf8; padding: 0.35rem 0.7rem;
+            border-radius: 0.4rem; font-size: 0.72rem; font-weight: 700;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem;
+          ">🗺️ Open Google Maps</a>
+          <a href="/farmer/login" style="
+            background: #16a34a; color: white; padding: 0.35rem 0.7rem;
+            border-radius: 0.4rem; font-size: 0.72rem; font-weight: 700;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem;
+          ">🎫 Book Slot</a>
+        </div>
+      </div>
+    `;
+
+    const marker = L.marker([centre.latitude, centre.longitude], { icon: greenIcon })
+      .addTo(leafletMap)
+      .bindPopup(popupHtml);
+
+    leafletMarkers.push({ id: centre.id, marker, centre });
+
+    // 2. Render List Item
+    if (listContainer) {
+      const itemEl = document.createElement('div');
+      itemEl.className = 'centre-list-item';
+      itemEl.id = `centre-list-${centre.id}`;
+      itemEl.tabIndex = 0;
+      itemEl.onclick = () => focusMapCentre(centre.id, centre.latitude, centre.longitude);
+
+      itemEl.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+          <div class="centre-item-name">${index === 0 && distText ? '⭐ NEAREST: ' : ''}${centre.name}</div>
+          ${distText ? `<span class="dist-badge" style="font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.4rem; background: #e0f2fe; color: #0369a1; border-radius: 0.3rem; white-space: nowrap;">${distText}</span>` : ''}
+        </div>
+        <div class="centre-item-address">📍 ${centre.location_address}</div>
+        <div class="centre-item-badges" style="margin-top: 0.4rem;">
+          <span class="centre-badge active">✓ ${centre.status ? centre.status.toUpperCase() : 'ACTIVE'}</span>
+          <span class="centre-badge capacity">${centre.daily_capacity} slots/day</span>
+          <span class="centre-badge" style="background: #f3e8ff; color: #6b21a8;">${centre.active_counters} counters</span>
+          <span class="centre-badge wait-badge" style="background: #dcfce7; color: #15803d;">${waitText}</span>
+        </div>
+        <div class="centre-item-actions" style="margin-top: 0.6rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
+          <a href="${gmapsUrl}" target="_blank" onclick="event.stopPropagation()" style="background: #1e293b; color: #38bdf8; text-decoration: none; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+            🗺️ Directions (Google Maps)
+          </a>
+          <a href="/farmer/login" onclick="event.stopPropagation()" style="background: #16a34a; color: #ffffff; text-decoration: none; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+            🎫 Book Slot
+          </a>
+        </div>
+      `;
+      listContainer.appendChild(itemEl);
+    }
+  });
+}
+
+async function fetchAndUpdateNearestCentres(lat, lng) {
+  try {
+    const cropId = document.getElementById('map-crop-filter')?.value || '';
+    const url = `/api/centres/nearest?lat=${lat}&lng=${lng}${cropId ? '&crop_id=' + cropId : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.success && data.centres.length > 0) {
+      renderCentresMapAndList(data.centres, lat, lng);
+    }
+  } catch (e) {
+    console.warn('Failed to fetch nearest centres API', e);
+  }
+}
+
+function filterCentresByCrop() {
+  const cropId = document.getElementById('map-crop-filter')?.value;
+  if (!cropId) {
+    renderCentresMapAndList(typeof CENTRES_DATA !== 'undefined' ? CENTRES_DATA : []);
+    return;
+  }
+  showToast('🌾 Filtering procurement centres accepting selected crop...', 'info');
+  // Re-render
+  renderCentresMapAndList(typeof CENTRES_DATA !== 'undefined' ? CENTRES_DATA : []);
 }
 
 function focusMapCentre(centreId, lat, lng) {
@@ -171,20 +287,21 @@ function geoLocateMe() {
   btn.disabled = true;
 
   navigator.geolocation.getCurrentPosition(
-    pos => {
+    async pos => {
       const { latitude, longitude } = pos.coords;
       if (leafletMap) {
-        leafletMap.flyTo([latitude, longitude], 10, { duration: 1.5 });
-        L.circle([latitude, longitude], { radius: 15000, color: '#16a34a', fillOpacity: 0.08 }).addTo(leafletMap);
+        leafletMap.flyTo([latitude, longitude], 9, { duration: 1.5 });
+        L.circle([latitude, longitude], { radius: 25000, color: '#16a34a', fillOpacity: 0.08 }).addTo(leafletMap);
         L.marker([latitude, longitude], {
           icon: L.divIcon({
             className: '',
-            html: `<div style="background:#3b82f6;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-size:0.85rem;">📍</div>`,
-            iconSize: [28, 28], iconAnchor: [14, 14]
+            html: `<div style="background:#3b82f6;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-size:0.9rem;">📍</div>`,
+            iconSize: [30, 30], iconAnchor: [15, 15]
           })
-        }).addTo(leafletMap).bindPopup('📍 Your Location').openPopup();
+        }).addTo(leafletMap).bindPopup('📍 Your Current Location').openPopup();
       }
-      showToast('📍 Location found! Showing nearby centres.', 'success');
+      await fetchAndUpdateNearestCentres(latitude, longitude);
+      showToast('📍 Location found! Centres sorted by distance.', 'success');
       btn.textContent = '📍 Use My Location'; btn.disabled = false;
     },
     err => {
@@ -210,10 +327,13 @@ async function searchMapLocation() {
     const results = await res.json();
     if (results.length > 0) {
       const { lat, lon, display_name } = results[0];
+      const userLat = parseFloat(lat);
+      const userLng = parseFloat(lon);
       if (leafletMap) {
-        leafletMap.flyTo([parseFloat(lat), parseFloat(lon)], 11, { duration: 1.5 });
-        showToast(`📍 Showing centres near ${display_name.split(',')[0]}`, 'success');
+        leafletMap.flyTo([userLat, userLng], 9, { duration: 1.5 });
       }
+      await fetchAndUpdateNearestCentres(userLat, userLng);
+      showToast(`📍 Showing centres sorted by distance from ${display_name.split(',')[0]}`, 'success');
     } else {
       showToast('Location not found. Try a broader search term.', 'error');
     }
@@ -222,6 +342,7 @@ async function searchMapLocation() {
   }
   btn.textContent = '🔍 Search'; btn.disabled = false;
 }
+
 
 // ─── Live Analytics Counter ─────────────────────────
 async function loadHeroStats() {

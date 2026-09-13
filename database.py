@@ -6,6 +6,7 @@
 import os
 import uuid
 import datetime
+import math
 from concurrent.futures import ThreadPoolExecutor
 from config import Config
 from supabase import create_client, Client
@@ -49,15 +50,37 @@ DEFAULT_CENTRES = [
 ]
 
 DEFAULT_CROPS = [
+    # --- Rabi Crops ---
     {"id": "CROP-01", "crop_name": "Wheat (Gehun)", "hindi_name": "गेहूं", "category": "Rabi", "msp_rate_per_quintal": 2425.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 50.0, "deduction_per_excess_moisture": 40.0},
-    {"id": "CROP-02", "crop_name": "Paddy / Rice (Dhan)", "hindi_name": "धान", "category": "Kharif", "msp_rate_per_quintal": 2300.0, "max_moisture_percentage": 17.0, "grade_a_bonus_per_quintal": 45.0, "deduction_per_excess_moisture": 35.0},
-    {"id": "CROP-03", "crop_name": "Mustard / Sarson", "hindi_name": "सरसों", "category": "Rabi", "msp_rate_per_quintal": 5650.0, "max_moisture_percentage": 8.0, "grade_a_bonus_per_quintal": 75.0, "deduction_per_excess_moisture": 50.0},
-    {"id": "CROP-04", "crop_name": "Gram / Chana", "hindi_name": "चना", "category": "Rabi", "msp_rate_per_quintal": 5440.0, "max_moisture_percentage": 10.0, "grade_a_bonus_per_quintal": 60.0, "deduction_per_excess_moisture": 45.0},
-    {"id": "CROP-05", "crop_name": "Soybean", "hindi_name": "सोयाबीन", "category": "Kharif", "msp_rate_per_quintal": 4892.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 55.0, "deduction_per_excess_moisture": 40.0},
-    {"id": "CROP-06", "crop_name": "Maize (Makka)", "hindi_name": "मक्का", "category": "Kharif", "msp_rate_per_quintal": 2225.0, "max_moisture_percentage": 14.0, "grade_a_bonus_per_quintal": 40.0, "deduction_per_excess_moisture": 30.0},
-    {"id": "CROP-07", "crop_name": "Moong Dal", "hindi_name": "मूंग", "category": "Kharif", "msp_rate_per_quintal": 8682.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 100.0, "deduction_per_excess_moisture": 60.0},
-    {"id": "CROP-08", "crop_name": "Cotton (Kapas)", "hindi_name": "कपास", "category": "Kharif", "msp_rate_per_quintal": 7121.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 80.0, "deduction_per_excess_moisture": 50.0}
+    {"id": "CROP-02", "crop_name": "Gram / Chana", "hindi_name": "चना", "category": "Rabi", "msp_rate_per_quintal": 5650.0, "max_moisture_percentage": 10.0, "grade_a_bonus_per_quintal": 60.0, "deduction_per_excess_moisture": 45.0},
+    {"id": "CROP-03", "crop_name": "Mustard / Sarson", "hindi_name": "सरसों", "category": "Rabi", "msp_rate_per_quintal": 5950.0, "max_moisture_percentage": 8.0, "grade_a_bonus_per_quintal": 75.0, "deduction_per_excess_moisture": 50.0},
+
+    # --- Kharif Cereals ---
+    {"id": "CROP-04", "crop_name": "Paddy / Rice (Common)", "hindi_name": "धान (सामान्य)", "category": "Kharif", "msp_rate_per_quintal": 2441.0, "max_moisture_percentage": 17.0, "grade_a_bonus_per_quintal": 45.0, "deduction_per_excess_moisture": 35.0},
+    {"id": "CROP-05", "crop_name": "Paddy / Rice (Grade A)", "hindi_name": "धान (ग्रेड-ए)", "category": "Kharif", "msp_rate_per_quintal": 2461.0, "max_moisture_percentage": 17.0, "grade_a_bonus_per_quintal": 50.0, "deduction_per_excess_moisture": 35.0},
+    {"id": "CROP-06", "crop_name": "Jowar (Hybrid)", "hindi_name": "ज्वार (हाइब्रिड)", "category": "Kharif", "msp_rate_per_quintal": 4023.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 40.0, "deduction_per_excess_moisture": 30.0},
+    {"id": "CROP-07", "crop_name": "Jowar (Maldandi)", "hindi_name": "ज्वार (मालदंडी)", "category": "Kharif", "msp_rate_per_quintal": 4073.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 40.0, "deduction_per_excess_moisture": 30.0},
+    {"id": "CROP-08", "crop_name": "Bajra", "hindi_name": "बाजरा", "category": "Kharif", "msp_rate_per_quintal": 2900.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 35.0, "deduction_per_excess_moisture": 25.0},
+    {"id": "CROP-09", "crop_name": "Ragi", "hindi_name": "रागी", "category": "Kharif", "msp_rate_per_quintal": 5205.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 50.0, "deduction_per_excess_moisture": 35.0},
+    {"id": "CROP-10", "crop_name": "Maize (Makka)", "hindi_name": "मक्का", "category": "Kharif", "msp_rate_per_quintal": 2410.0, "max_moisture_percentage": 14.0, "grade_a_bonus_per_quintal": 40.0, "deduction_per_excess_moisture": 30.0},
+
+    # --- Kharif Pulses ---
+    {"id": "CROP-11", "crop_name": "Tur / Arhar", "hindi_name": "तूर / अरहर", "category": "Kharif", "msp_rate_per_quintal": 8450.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 100.0, "deduction_per_excess_moisture": 60.0},
+    {"id": "CROP-12", "crop_name": "Moong Dal", "hindi_name": "मूंग", "category": "Kharif", "msp_rate_per_quintal": 8780.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 100.0, "deduction_per_excess_moisture": 60.0},
+    {"id": "CROP-13", "crop_name": "Urad Dal", "hindi_name": "उड़द", "category": "Kharif", "msp_rate_per_quintal": 8200.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 90.0, "deduction_per_excess_moisture": 55.0},
+
+    # --- Kharif Oilseeds ---
+    {"id": "CROP-14", "crop_name": "Groundnut", "hindi_name": "मूंगफली", "category": "Kharif", "msp_rate_per_quintal": 7517.0, "max_moisture_percentage": 10.0, "grade_a_bonus_per_quintal": 80.0, "deduction_per_excess_moisture": 50.0},
+    {"id": "CROP-15", "crop_name": "Sunflower Seed", "hindi_name": "सूरजमुखी", "category": "Kharif", "msp_rate_per_quintal": 8343.0, "max_moisture_percentage": 10.0, "grade_a_bonus_per_quintal": 90.0, "deduction_per_excess_moisture": 55.0},
+    {"id": "CROP-16", "crop_name": "Soybean (Yellow)", "hindi_name": "सोयाबीन", "category": "Kharif", "msp_rate_per_quintal": 5708.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 55.0, "deduction_per_excess_moisture": 40.0},
+    {"id": "CROP-17", "crop_name": "Sesamum (Til)", "hindi_name": "तिल", "category": "Kharif", "msp_rate_per_quintal": 10346.0, "max_moisture_percentage": 8.0, "grade_a_bonus_per_quintal": 120.0, "deduction_per_excess_moisture": 70.0},
+    {"id": "CROP-18", "crop_name": "Nigerseed", "hindi_name": "रामतिल / नाइजर", "category": "Kharif", "msp_rate_per_quintal": 10052.0, "max_moisture_percentage": 8.0, "grade_a_bonus_per_quintal": 110.0, "deduction_per_excess_moisture": 65.0},
+
+    # --- Commercial Crops ---
+    {"id": "CROP-19", "crop_name": "Cotton (Medium Staple)", "hindi_name": "कपास (मध्यम रेशे)", "category": "Kharif", "msp_rate_per_quintal": 8267.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 80.0, "deduction_per_excess_moisture": 50.0},
+    {"id": "CROP-20", "crop_name": "Cotton (Long Staple)", "hindi_name": "कपास (लंबा रेशे)", "category": "Kharif", "msp_rate_per_quintal": 8667.0, "max_moisture_percentage": 12.0, "grade_a_bonus_per_quintal": 90.0, "deduction_per_excess_moisture": 50.0}
 ]
+
 
 DEFAULT_DESKS = [
     {"id": "DESK-01", "centre_id": "CENTRE-01", "desk_number": 1, "desk_name": "Counter 1 - Verification & Moisture Test", "desk_type": "moisture_and_grade", "operator_name": "Dr. Ramesh Mehra (Agronomist)", "status": "idle", "current_token": None},
@@ -204,7 +227,16 @@ def init_db():
     except Exception as e:
         print(f"[SUPABASE SEED ADMINS NOTICE] {e}")
 
+    # Seed/Upsert official CCEA MSP rates into Supabase crops_msp table
+    try:
+        for crop in DEFAULT_CROPS:
+            supabase_admin.table("crops_msp").upsert(crop, on_conflict="id").execute()
+        print("[SUPABASE] Seeded official government CCEA MSP rates into PostgreSQL.")
+    except Exception as e:
+        print(f"[SUPABASE SEED CROPS NOTICE] {e}")
+
     sync_catalogs_from_supabase()
+
 
 # ─── Catalog Getters ────────────────────────────────────────────────────────
 def get_all_centres():
@@ -220,6 +252,64 @@ def get_all_centres():
 def get_centre_by_id(centre_id: str):
     centres = get_all_centres()
     return next((c for c in centres if c['id'] == centre_id), None)
+
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculates Great-Circle distance between two (lat, lon) coordinates in kilometers."""
+    R = 6371.0  # Earth's radius in kilometers
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return round(R * c, 2)
+
+def get_nearest_centres(lat: float, lng: float, crop_id: str = None, max_radius_km: float = 1000.0):
+    """Returns list of active centres sorted by distance from (lat, lng), enriched with live congestion status."""
+    all_centres = get_all_centres()
+    results = []
+
+    for c in all_centres:
+        c_lat = c.get("latitude")
+        c_lng = c.get("longitude")
+        if c_lat is None or c_lng is None:
+            continue
+
+        try:
+            dist_km = haversine_distance(float(lat), float(lng), float(c_lat), float(c_lng))
+        except (ValueError, TypeError):
+            continue
+
+        if dist_km > max_radius_km:
+            continue
+
+        # Live queue congestion & wait estimation
+        active_tokens = len([
+            b for b in _local_store.get("bookings", {}).values()
+            if b.get("centre_id") == c["id"] and b.get("status") in ["checked_in", "called", "processing"]
+        ])
+
+        if active_tokens < 3:
+            congestion_level = "low"
+            estimated_wait_mins = "< 15 mins"
+        elif active_tokens < 8:
+            congestion_level = "moderate"
+            estimated_wait_mins = "20 - 40 mins"
+        else:
+            congestion_level = "heavy"
+            estimated_wait_mins = "1 hr+"
+
+        google_maps_url = f"https://www.google.com/maps/dir/?api=1&destination={c_lat},{c_lng}"
+
+        c_copy = dict(c)
+        c_copy["distance_km"] = dist_km
+        c_copy["congestion_level"] = congestion_level
+        c_copy["estimated_wait_mins"] = estimated_wait_mins
+        c_copy["google_maps_url"] = google_maps_url
+        c_copy["active_tokens_count"] = active_tokens
+        results.append(c_copy)
+
+    results.sort(key=lambda x: x["distance_km"])
+    return results
+
 
 def get_all_crops():
     global _crops_cache

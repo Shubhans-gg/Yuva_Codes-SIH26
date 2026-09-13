@@ -16,7 +16,7 @@ from database import (
     get_desk_by_id, assign_desk_token, insert_procurement_record, create_payment_txn,
     get_procurement_by_receipt, update_payment_credited, get_farmer_bookings,
     get_admin_by_username, upsert_otp_session, get_otp_session, mark_otp_session_used,
-    get_sms_logs as db_get_sms_logs, get_analytic_summary, get_analytic_summary,
+    get_sms_logs as db_get_sms_logs, get_analytic_summary, get_nearest_centres,
     upload_document_to_storage, verify_supabase_token, STORAGE_BUCKET
 )
 
@@ -353,10 +353,32 @@ def list_centres():
     centres = get_all_centres()
     return jsonify({"success": True, "centres": centres})
 
+@app.route('/api/centres/nearest', methods=['GET'])
+def list_nearest_centres():
+    lat = request.args.get('lat')
+    lng = request.args.get('lng')
+    crop_id = request.args.get('crop_id')
+
+    if not lat or not lng:
+        return jsonify({"success": False, "error": "lat and lng parameters are required"}), 400
+
+    try:
+        nearest = get_nearest_centres(float(lat), float(lng), crop_id=crop_id)
+        return jsonify({
+            "success": True,
+            "centres": nearest,
+            "user_location": {"lat": float(lat), "lng": float(lng)}
+        })
+    except ValueError:
+        return jsonify({"success": False, "error": "Invalid lat or lng values"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/api/crops', methods=['GET'])
 def list_crops():
     crops = get_all_crops()
     return jsonify({"success": True, "crops": crops})
+
 
 
 # 3. Dynamic Slots & Capacity

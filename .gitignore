@@ -1,13 +1,33 @@
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# Vercel local cache
+.vercel
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python runtime artifacts & caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+
+# IDE & System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
 # Database files
 *.db
 *.sqlite
 *.sqlite3
 smartprocure.db
-
-# Environment & Secrets
-.env
-
-# Python runtime artifacts
-__pycache__/
-*.pyc
-venv/

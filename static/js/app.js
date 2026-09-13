@@ -7,14 +7,83 @@ const I18N = {
   en: {
     app_title: "SMARTPROCURE",
     app_tagline: "Digital Procurement Queue & Status Platform",
-    nav_farmer: "Farmer Portal",
-    nav_admin: "Centre Desk",
-    nav_display: "Public TV Queue",
+    nav_home: "🏠 Home",
+    nav_farmer: "👨‍🌾 Farmer Portal",
+    nav_admin: "🏢 Admin Panel",
+    nav_display: "📺 Live Queue",
     lang_btn: "हिंदी",
     mob_nav_home: "Home",
     mob_nav_book: "Book Slot",
     mob_nav_queue: "Live Queue",
     mob_nav_sms: "SMS Alerts",
+
+    // Hero Section
+    hero_title: 'Smart <span class="highlight">Procurement</span><br>for Every Farmer',
+    hero_subtitle: "Book your Mandi slot, track live queue positions, and receive guaranteed MSP payments directly to your bank — all from your mobile.",
+    btn_farmer_login: "👨‍🌾 Farmer Login / Signup",
+    btn_admin_login: "🏢 Admin / Operator Login",
+    stat_farmers: "Registered Farmers",
+    stat_wait_reduction: "Queue Wait Reduction",
+    stat_dbt: "DBT Direct to Bank",
+    stat_crops: "Crops Supported",
+
+    // MSP Section
+    ticker_label: "📊 LIVE MSP 2026-27",
+    msp_tag: "📊 Government Approved",
+    msp_title: "2026-27 Minimum Support Prices (MSP)",
+    msp_desc: "Officially notified MSP rates for Kharif & Rabi crops as per Cabinet Committee on Economic Affairs (CCEA)",
+    per_quintal: "per Quintal (100 kg)",
+
+    // Mandi Finder Section
+    finder_tag: "📍 Find Nearby",
+    finder_title: "Locate Nearest Procurement Centre",
+    finder_desc: "Search by city or district to find government procurement Mandis near you",
+    all_crops: "🌾 All Crops",
+    search_placeholder: "Enter city, district or pincode... e.g. Karnal, Ludhiana",
+    btn_use_location: "📍 Use My Location",
+    btn_search: "🔍 Search",
+
+    // How It Works Section
+    how_tag: "⚡ Simple 6-Step Process",
+    how_title: "How SmartProcure Works",
+    how_desc: "From registration to payment in 6 easy steps — no paperwork, no queues",
+
+    step1_badge: "STEP 01 • MOBILE REGISTRATION",
+    step1_title: "1. Register via Mobile OTP",
+    step1_desc: "Verify your mobile number with OTP, then enter your Aadhaar & bank details once.",
+    step1_chip: "✨ One-Time Registration",
+
+    step2_badge: "STEP 02 • SLOT BOOKING",
+    step2_title: "2. Book a Guaranteed Slot",
+    step2_desc: "Select your nearest Mandi, crop type, preferred date & time — get a digital token instantly.",
+    step2_chip: "🎟️ Instant Digital Pass",
+
+    step3_badge: "STEP 03 • MANDI ARRIVAL",
+    step3_title: "3. Arrive & Quick Check-In",
+    step3_desc: "Arrive at your booked time and check-in via phone. Skip the physical line entirely.",
+    step3_chip: "🚫 Zero Physical Waiting",
+
+    step4_badge: "STEP 04 • LIVE QUEUE",
+    step4_title: "4. Track Live Queue Line",
+    step4_desc: "Watch real-time token position and estimated wait time from your phone or tractor.",
+    step4_chip: "📱 Live Phone Alerts",
+
+    step5_badge: "STEP 05 • WEIGHMENT & QUALITY",
+    step5_title: "5. Digital Weighbridge & Quality Check",
+    step5_desc: "Computerized transparent weighment & certified grading receipt created on the spot.",
+    step5_chip: "秤 100% Accurate Scale",
+
+    step6_badge: "STEP 06 • DIRECT BANK PAYMENT",
+    step6_title: "6. Direct Bank Transfer (DBT)",
+    step6_desc: "Full MSP payment credited directly to your bank account via PFMS — zero middlemen or fees.",
+    step6_chip: "💰 100% Money to Bank Account",
+
+    // Bottom CTA Banner
+    cta_title: "Ready to Sell Your Crop at MSP?",
+    cta_desc: "Join thousands of farmers already benefiting from transparent, queue-free digital procurement",
+    btn_register_farmer: "✍️ Register as Farmer",
+    btn_already_login: "🔐 Already Registered? Login",
+
     network_offline: "Spotty connection: Working in resilient offline mode.",
     network_online: "Connected: Mandi gateway online & synchronized.",
     step_register: "Register",
@@ -44,14 +113,83 @@ const I18N = {
   hi: {
     app_title: "स्मार्टप्रोक्योर",
     app_tagline: "किसानों के लिए डिजिटल शेड्यूलिंग, कतार व खरीद स्थिति पोर्टल",
-    nav_farmer: "किसान पोर्टल",
-    nav_admin: "केंद्र ऑपरेटर",
-    nav_display: "सार्वजनिक टीवी कतार",
+    nav_home: "🏠 मुख्य पृष्ठ",
+    nav_farmer: "👨‍🌾 किसान पोर्टल",
+    nav_admin: "🏢 एडमिन पैनल",
+    nav_display: "📺 लाइव कतार",
     lang_btn: "English",
     mob_nav_home: "मुख्य",
     mob_nav_book: "स्लॉट बुक",
     mob_nav_queue: "लाइव कतार",
     mob_nav_sms: "एसएमएस",
+
+    // Hero Section
+    hero_title: 'हर किसान के लिए <span class="highlight">डिजिटल एवं सुगम</span><br>मंडी खरीद पोर्टल',
+    hero_subtitle: "अपनी मंडी स्लॉट बुक करें, लाइव कतार स्थिति देखें और सीधा बैंक भुगतान (DBT) पाएं — अपने मोबाइल से आसान प्रक्रिया।",
+    btn_farmer_login: "👨‍🌾 किसान लॉगिन / नया पंजीकरण",
+    btn_admin_login: "🏢 ऑपरेटर / एडमिन लॉगिन",
+    stat_farmers: "पंजीकृत किसान",
+    stat_wait_reduction: "समय की बचत",
+    stat_dbt: "सीधा बैंक भुगतान",
+    stat_crops: "फसलें उपलब्ध",
+
+    // MSP Section
+    ticker_label: "📊 लाइव न्यूनतम समर्थन मूल्य (MSP)",
+    msp_tag: "📊 सरकार द्वारा स्वीकृत",
+    msp_title: "2026-27 न्यूनतम समर्थन मूल्य (MSP)",
+    msp_desc: "आर्थिक मामलों की कैबिनेट समिति (CCEA) द्वारा अधिसूचित आधिकारिक फसल दरें",
+    per_quintal: "प्रति क्विंटल (100 किग्रा)",
+
+    // Mandi Finder Section
+    finder_tag: "📍 नजदीकी केंद्र ढूंढें",
+    finder_title: "नजदीकी सरकारी खरीद केंद्र (मंडी) खोजें",
+    finder_desc: "अपने आसपास की सरकारी मंडियों और लाइव भीड़ की स्थिति देखने के लिए शहर, जिला या पिनकोड खोजें",
+    all_crops: "🌾 सभी फसलें",
+    search_placeholder: "शहर, जिला या पिनकोड दर्ज करें... जैसे करनाल, लुधियाना",
+    btn_use_location: "📍 मेरा स्थान प्रयोग करें",
+    btn_search: "🔍 खोजें",
+
+    // How It Works Section (Hindi Vernacular - Easy for Farmer)
+    how_tag: "⚡ सरल 6-चरण प्रक्रिया",
+    how_title: "स्मार्टप्रोक्योर से फसल बेचना है बहुत आसान",
+    how_desc: "रजिस्ट्रेशन से लेकर खाते में पैसे आने तक 6 आसान चरणों में — बिना कागजी कार्रवाई, बिना लंबी लाइन",
+
+    step1_badge: "चरण 01 • मोबाइल रजिस्ट्रेशन",
+    step1_title: "1. मोबाइल नंबर से रजिस्ट्रेशन",
+    step1_desc: "अपने मोबाइल पर OTP प्राप्त करें। अपना नाम, आधार और बैंक खाता विवरण एक बार दर्ज करें।",
+    step1_chip: "✨ केवल एक बार रजिस्ट्रेशन",
+
+    step2_badge: "चरण 02 • स्लॉट बुकिंग",
+    step2_title: "2. मंडी और अपनी पसंद का समय चुनें",
+    step2_desc: "नजदीकी मंडी, फसल और तिथि चुनकर तुरंत डिजिटल पास (टोकन) प्राप्त करें।",
+    step2_chip: "🎟️ तुरंत डिजिटल टोकन / पास",
+
+    step3_badge: "चरण 03 • मंडी आगमन",
+    step3_title: "3. तय समय पर मंडी आएं और चेक-इन करें",
+    step3_desc: "अपने बुक किए गए समय पर मंडी पहुंचें और फोन से चेक-इन करके सीधी एंट्री पाएं।",
+    step3_chip: "🚫 धूप में लाइन लगाने की जरूरत नहीं",
+
+    step4_badge: "चरण 04 • लाइव कतार",
+    step4_title: "4. फोन पर अपनी बारी (लाइव लाइन) देखें",
+    step4_desc: "ट्रैक्टर या किसान विश्राम गृह में आराम से बैठकर देखें आपकी बारी आने में कितना समय है।",
+    step4_chip: "📱 मोबाइल पर लाइव टोकन स्थिति",
+
+    step5_badge: "चरण 05 • तौल एवं जांच",
+    step5_title: "5. डिजिटल धर्म कांटा तौल व गुणवत्ता जांच",
+    step5_desc: "कंप्यूटर द्वारा पारदर्शी तौल और सरकारी अधिकारी द्वारा सही ग्रेडिंग की रसीद पाएं।",
+    step5_chip: "⚖️ 100% सही व निष्पक्ष तौल",
+
+    step6_badge: "चरण 06 • 100% सीधा बैंक भुगतान",
+    step6_title: "6. सीधा बैंक खाते में फसल का पूरा पैसा (DBT)",
+    step6_desc: "फसल का पूरा भुगतान बिना किसी दलाल या बिचौलिए के सीधे आपके बैंक खाते में जमा।",
+    step6_chip: "💰 0% दलाली • 100% बैंक खाता",
+
+    // Bottom CTA Banner
+    cta_title: "क्या आप अपनी फसल MSP पर बेचने के लिए तैयार हैं?",
+    cta_desc: "हजारों किसानों के साथ जुड़ें और पारदर्शी व कतार-मुक्त मंडी खरीद का लाभ उठाएं",
+    btn_register_farmer: "✍️ किसान पंजीकरण करें",
+    btn_already_login: "🔐 पहले से पंजीकृत? लॉगिन करें",
+
     network_offline: "ऑफ़लाइन मोड: नेटवर्क कमजोर है। विवरण सुरक्षित है।",
     network_online: "ऑनलाइन वापस: मंडी सर्वर कनेक्ट हो गया।",
     step_register: "पंजीकरण",
@@ -90,7 +228,14 @@ function setLanguage(lang) {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (I18N[lang] && I18N[lang][key]) {
-      el.textContent = I18N[lang][key];
+      el.innerHTML = I18N[lang][key];
+    }
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (I18N[lang] && I18N[lang][key]) {
+      el.placeholder = I18N[lang][key];
     }
   });
 
