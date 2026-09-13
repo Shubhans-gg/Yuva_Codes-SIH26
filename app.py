@@ -238,7 +238,7 @@ def verify_otp():
 # SUPABASE STORAGE FILE UPLOAD
 @app.route('/api/storage/upload', methods=['POST'])
 def storage_upload():
-    if 'file' not request.files:
+    if 'file' not in request.files:
         return jsonify({"success": False, "error": "No file attached in request"}), 400
     file = request.files['file']
     if file.filename == '':
@@ -250,7 +250,7 @@ def storage_upload():
         public_url = upload_document_to_storage(
             file_bytes=file_bytes,
             filename=file.filename,
-            content_type=file.content_type or "application/octet-stream"
+            content_type=file.content_type or "application/octet-stream",
             folder=folder
         )
         return jsonify({
@@ -283,7 +283,7 @@ def farmer_login_direct():
     farmer = get_farmer_by_phone(phone) if phone else None
 
     if farmer:
-        return jsonify({"success": True, "farmer"=farmer, "message": "Farmer authenticated successfully"})
+        return jsonify({"success": True, "farmer": farmer, "message": "Farmer authenticated successfully"})
     return jsonify({"success":False, "error": "Farmer profile not found. Please register."}), 404
 
 @app.route('/api/auth/register-farmer', methods=['POST'])
