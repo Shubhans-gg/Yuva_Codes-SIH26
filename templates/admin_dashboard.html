@@ -254,19 +254,6 @@
               <input type="text" id="weigh-notes" class="form-control" value="Grain quality verified. High purity and optimal moisture.">
             </div>
 
-            <!-- Supabase Storage Document Attachment -->
-            <div class="form-group">
-              <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
-                <span>📸 Weighbridge Slip / Quality Photo</span>
-                <span style="background:rgba(34,197,94,0.15); color:#22c55e; font-size:0.7rem; font-weight:700; padding:0.15rem 0.45rem; border-radius:0.3rem;">⚡ Supabase Storage</span>
-              </label>
-              <input type="file" id="weigh-doc-file" class="form-control" accept="image/*,.pdf" onchange="handleWeighDocUpload(this)" style="font-size:0.8rem; padding:0.4rem;">
-              <input type="hidden" id="weigh-doc-url">
-              <div id="weigh-doc-status" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-                Optional: Uploads slip photo directly to bucket <code>smartprocure-documents</code>
-              </div>
-            </div>
-
             <div class="calculation-summary-card">
               <div class="calc-row">
                 <span>Net Produce Quantity:</span>

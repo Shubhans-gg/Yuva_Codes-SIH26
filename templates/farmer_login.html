@@ -69,15 +69,6 @@
       <div class="brand-sub">Department of Consumer Affairs • Government of India</div>
     </div>
 
-    <!-- Step Indicator -->
-    <div class="auth-steps-indicator" id="steps-indicator">
-      <div class="auth-step-dot active" id="step-dot-1">1</div>
-      <div class="auth-step-line" id="step-line-1"></div>
-      <div class="auth-step-dot" id="step-dot-2">2</div>
-      <div class="auth-step-line" id="step-line-2"></div>
-      <div class="auth-step-dot" id="step-dot-3">✓</div>
-    </div>
-
     <div class="auth-card" id="auth-main-card">
       <!-- STEP 1: Enter Phone or Demo Login -->
       <div class="otp-step" id="login-step-1">
@@ -116,7 +107,7 @@
         </div>
 
         <div class="auth-footer-links">
-          New farmer? <a href="/farmer/signup">Create Account & Upload Docs</a>
+          New farmer? <a href="/farmer/signup">Create Account</a>
           &nbsp;|&nbsp;
           <a href="/">← Back to Home</a>
         </div>
@@ -182,15 +173,20 @@
 
   function goToStep(n) {
     [1,2,3].forEach(i => {
-      document.getElementById('login-step-'+i).style.display = 'none';
-      document.getElementById('step-dot-'+i).classList.remove('active','done');
+      const stepEl = document.getElementById('login-step-'+i);
+      if (stepEl) stepEl.style.display = 'none';
+      const dotEl = document.getElementById('step-dot-'+i);
+      if (dotEl) dotEl.classList.remove('active','done');
     });
-    document.getElementById('login-step-'+n).style.display = '';
-    document.getElementById('step-dot-'+n).classList.add('active');
+    const targetStep = document.getElementById('login-step-'+n);
+    if (targetStep) targetStep.style.display = '';
+    const activeDot = document.getElementById('step-dot-'+n);
+    if (activeDot) activeDot.classList.add('active');
     for(let i=1; i<n; i++) {
-      document.getElementById('step-dot-'+i).classList.add('done');
-      if(document.getElementById('step-line-'+i))
-        document.getElementById('step-line-'+i).classList.add('done');
+      const d = document.getElementById('step-dot-'+i);
+      if (d) d.classList.add('done');
+      const l = document.getElementById('step-line-'+i);
+      if (l) l.classList.add('done');
     }
   }
 

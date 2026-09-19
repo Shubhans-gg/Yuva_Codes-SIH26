@@ -17,7 +17,7 @@ from database import (
     get_procurement_by_receipt, update_payment_credited, get_farmer_bookings,
     get_admin_by_username, upsert_otp_session, get_otp_session, mark_otp_session_used,
     get_sms_logs as db_get_sms_logs, get_analytic_summary, get_nearest_centres,
-    upload_document_to_storage, verify_supabase_token, STORAGE_BUCKET
+    verify_supabase_token
 )
 
 
@@ -204,28 +204,41 @@ def send_otp():
 def verify_otp():
     data = request.json or {}
     phone = data.get('phone', '').strip()
-    otp = data.get('otp', '').strip()
+    otp = str(data.get('otp', '')).strip()
 
     if not phone or not otp:
         return jsonify({"success": False, "error": "Phone and OTP are required"}), 400
 
-    # Demo hardcoded bypasses
     is_valid = False
     if otp in ['1234', '7469'] and phone in ['9876543210', '9812345678', '9425123456']:
         is_valid = True
-
     else:
         try:
             session = get_otp_session(phone)
             if session and not session.get("used"):
-                expires_at = session.get("expires_at")
-                if expires_at and datetime.datetime.fromisoformat(expires_at) >= datetime.datetime.now():
-                    if session.get('otp_code') == otp:
+                session_otp = str(session.get("otp_code", "")).strip()
+                if session_otp == otp:
+                    expires_at = session.get("expires_at")
+                    if expires_at:
+                        try:
+                            exp_str = str(expires_at).replace('Z', '+00:00')
+                            exp_dt = datetime.datetime.fromisoformat(exp_str)
+                            now = datetime.datetime.now(exp_dt.tzinfo) if exp_dt.tzinfo else datetime.datetime.now()
+                            if exp_dt >= now:
+                                is_valid = True
+                            else:
+                                print(f"[OTP EXPIRED] Expired at {exp_dt}")
+                        except Exception as dt_err:
+                            print(f"[OTP DT PARSE ERROR] {dt_err}")
+                            is_valid = True
+                    else:
                         is_valid = True
+
+                    if is_valid:
                         mark_otp_session_used(phone)
 
         except Exception as e:
-            print(f"Error checking OTP session: {e}")
+            print(f"[VERIFY OTP ERROR] {e}")
 
     if not is_valid:
         return jsonify({"success": False, "error": "Incorrect or expired OTP"}), 400
@@ -235,34 +248,6 @@ def verify_otp():
         return jsonify({"success": True, "farmer": farmer, "is_new": False})
     else:
         return jsonify({"success": True, "phone": phone, "is_new": True})
-
-# SUPABASE STORAGE FILE UPLOAD
-@app.route('/api/storage/upload', methods=['POST'])
-def storage_upload():
-    if 'file' not in request.files:
-        return jsonify({"success": False, "error": "No file attached in request"}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"success": False, "error": "No file selected"}), 400
-
-    folder = request.form.get('folder', 'documents')
-    try:
-        file_bytes = file.read()
-        public_url = upload_document_to_storage(
-            file_bytes=file_bytes,
-            filename=file.filename,
-            content_type=file.content_type or "application/octet-stream",
-            folder=folder
-        )
-        return jsonify({
-            "success": True,
-            "url": public_url,
-            "filename": file.filename,
-            "message": "File uploaded successfully"
-        })
-    except Exception as e:
-        return jsonify({"success": False, "error": f"Upload failed: {str(e)}"}), 500
-
 
 @app.route('/api/auth/farmer/login', methods=['POST'])
 def farmer_login_direct():
@@ -301,7 +286,6 @@ def register_farmer():
     bank_ifsc = data.get('bank_ifsc', '').strip()
     bank_name = data.get('bank_name', 'State Bank of India').strip()
     upi_id = data.get('upi_id', '').strip()
-    document_url = data.get('document_url', '').strip()
 
     if not phone or not full_name:
         return jsonify({"success": False, "error": "Phone number and Name are required"}), 400
@@ -310,22 +294,20 @@ def register_farmer():
     if existing:
         farmer_id = existing['id']
         kisan_id = existing.get('kisan_id')
-        masked_aadhaar = existing.get('aadhaar_masked')
+        masked_aadhaar = existing.get('aadhaar_masked') or (f"XXXX-XXXX-{aadhaar[-4:]}" if aadhaar else "XXXX-XXXX-0000")
         created_at = existing.get('created_at')
-        doc_url = document_url or existing.get('document_url')
-
     else:
         farmer_id = f"FARMER-{uuid.uuid4().hex[:8].upper()}"
         kisan_id = f"KISAN-{state[:2].upper()}-2026-{uuid.uuid4().hex[:5].upper()}"
-        masked_aadhaar = f"XXXX-XXXX-{aadhaar[-4:]}"
+        masked_aadhaar = f"XXXX-XXXX-{aadhaar[-4:]}" if aadhaar else "XXXX-XXXX-0000"
         created_at = datetime.datetime.now().isoformat()
-        doc_url = document_url
 
     f = {
         "id": farmer_id,
         "phone": phone,
         "email": email or f"farmer_{phone}@smartprocure.in",
         "full_name": full_name,
+        "aadhaar": aadhaar,
         "aadhaar_masked": masked_aadhaar,
         "kisan_id": kisan_id,
         "state": state,
@@ -335,7 +317,6 @@ def register_farmer():
         "bank_ifsc": bank_ifsc,
         "bank_name": bank_name,
         "upi_id": upi_id,
-        "document_url": doc_url,
         "created_at": created_at
     }
 
@@ -578,7 +559,6 @@ def record_procurement_api():
     quality_grade = data.get('quality_grade', 'Grade A')
     operator_notes = data.get('operator_notes', 'Verified grain quality and weight.')
     verified_by = data.get('verified_by', 'S. K. Sharma (Procurement Officer)')
-    document_url = data.get('document_url', '').strip() or f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/sample/doca_verification_sample.txt"
 
     if not token_number or gross_weight_kg <= 0 or tare_weight_kg < 0:
         return jsonify({"success": False, "error": "Valid token and weight measurements required"}), 400
@@ -623,7 +603,6 @@ def record_procurement_api():
         "effective_rate_per_quintal": effective_rate,
         "total_payable_amount": total_payable,
         "receipt_number": receipt_number,
-        "document_url": document_url,
         "operator_notes": operator_notes,
         "verified_by": verified_by,
         "created_at": now_iso

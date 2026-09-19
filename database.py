@@ -11,8 +11,6 @@ from concurrent.futures import ThreadPoolExecutor
 from config import Config
 from supabase import create_client, Client
 
-STORAGE_BUCKET = "smartprocure-documents"
-
 # ─── Supabase Clients ────────────────────────────────────────────────────────
 if not Config.SUPABASE_URL or not Config.SUPABASE_KEY:
     raise EnvironmentError(
@@ -99,6 +97,7 @@ DEFAULT_FARMERS = {
         "phone": "9876543210",
         "full_name": "Ram Lal Verma",
         "email": "farmer1@smartprocure.in",
+        "aadhaar": "492149214921",
         "aadhaar_masked": "XXXX-XXXX-4921",
         "kisan_id": "KISAN-HR-2026-08192",
         "state": "Haryana",
@@ -108,7 +107,6 @@ DEFAULT_FARMERS = {
         "bank_ifsc": "SBIN0001234",
         "bank_name": "State Bank of India",
         "upi_id": "ramlal@upi",
-        "document_url": f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/sample/doca_verification_sample.txt",
         "created_at": datetime.datetime.now().isoformat()
     },
     "9812345678": {
@@ -116,6 +114,7 @@ DEFAULT_FARMERS = {
         "phone": "9812345678",
         "full_name": "Baldev Singh Dhillon",
         "email": "farmer2@smartprocure.in",
+        "aadhaar": "883288328832",
         "aadhaar_masked": "XXXX-XXXX-8832",
         "kisan_id": "KISAN-PB-2026-04128",
         "state": "Punjab",
@@ -125,7 +124,6 @@ DEFAULT_FARMERS = {
         "bank_ifsc": "PUNB0123400",
         "bank_name": "Punjab National Bank",
         "upi_id": "baldev@pnb",
-        "document_url": f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/sample/doca_verification_sample.txt",
         "created_at": datetime.datetime.now().isoformat()
     }
 }
@@ -149,21 +147,6 @@ _local_store = {
 
 _centres_cache = DEFAULT_CENTRES
 _crops_cache = DEFAULT_CROPS
-
-# ─── Storage Helpers ─────────────────────────────────────────────────────────
-def upload_document_to_storage(file_bytes: bytes, filename: str, content_type: str = "image/jpeg", folder: str = "documents") -> str:
-    """Uploads a file to Supabase Storage bucket 'smartprocure-documents'."""
-    try:
-        clean_name = f"{folder}/{uuid.uuid4().hex[:10]}_{filename}"
-        supabase_admin.storage.from_(STORAGE_BUCKET).upload(
-            clean_name,
-            file_bytes,
-            file_options={"upsert": "true", "content-type": content_type}
-        )
-        return f"{Config.SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/{clean_name}"
-    except Exception as e:
-        print(f"[SUPABASE STORAGE ERROR] {e}")
-        return ""
 
 def verify_supabase_token(access_token: str):
     """Verifies a Supabase Auth JWT token."""
@@ -195,18 +178,7 @@ def sync_catalogs_from_supabase():
         print(f"[SUPABASE CROPS SYNC] {e}")
 
 def init_db():
-    """Verifies Supabase connectivity, bucket existence, and seeds initial data."""
-    try:
-        buckets = supabase_admin.storage.list_buckets()
-        names = [b.name for b in (buckets or [])]
-        if STORAGE_BUCKET not in names:
-            supabase_admin.storage.create_bucket(STORAGE_BUCKET, options={"public": True})
-            print(f"[SUPABASE] Storage bucket '{STORAGE_BUCKET}' created.")
-        else:
-            print(f"[SUPABASE] Storage bucket '{STORAGE_BUCKET}' verified.")
-    except Exception as e:
-        print(f"[SUPABASE NOTICE] Storage init: {e}")
-
+    """Seeds initial catalog data into Supabase PostgreSQL."""
     # Seed default farmers into Supabase if empty
     try:
         res = supabase_admin.table("farmers").select("id").limit(1).execute()
@@ -231,7 +203,6 @@ def init_db():
     try:
         for crop in DEFAULT_CROPS:
             supabase_admin.table("crops_msp").upsert(crop, on_conflict="id").execute()
-        print("[SUPABASE] Seeded official government CCEA MSP rates into PostgreSQL.")
     except Exception as e:
         print(f"[SUPABASE SEED CROPS NOTICE] {e}")
 
@@ -354,13 +325,16 @@ def upsert_otp_session(phone: str, otp_code: str, expires_at):
         print(f"[SUPABASE OTP UPSERT ERROR] {e}")
 
 def get_otp_session(phone: str):
+    local_rec = _local_store["otp_sessions"].get(phone)
+    if local_rec:
+        return local_rec
     try:
         res = supabase_admin.table("otp_sessions").select("*").eq("phone", phone).execute()
         if res.data and len(res.data) > 0:
             return res.data[0]
     except Exception as e:
         print(f"[SUPABASE OTP FETCH ERROR] {e}")
-    return _local_store["otp_sessions"].get(phone)
+    return None
 
 def mark_otp_session_used(phone: str):
     if phone in _local_store["otp_sessions"]:
@@ -396,10 +370,27 @@ def get_farmer_by_id(farmer_id: str):
 def save_farmer(f: dict):
     """Saves or updates farmer record in Supabase PostgreSQL and local cache."""
     _local_store["farmers"][f["phone"]] = f
+
+    # Known columns in Supabase 'farmers' table schema
+    valid_db_keys = {
+        "id", "auth_user_id", "phone", "full_name", "email", "aadhaar_masked",
+        "kisan_id", "state", "district", "village",
+        "bank_account_no", "bank_ifsc", "bank_name", "upi_id", "created_at"
+    }
+
+    db_f = {k: v for k, v in f.items() if k in valid_db_keys}
+
     try:
-        supabase_admin.table("farmers").upsert(f, on_conflict="phone").execute()
+        res = supabase_admin.table("farmers").upsert(db_f, on_conflict="phone").execute()
+        print(f"[SUPABASE SUCCESS] Farmer {f.get('phone')} saved to PostgreSQL table 'farmers'.")
+        return res
     except Exception as e:
-        print(f"[SUPABASE FARMER UPSERT NOTICE] {e}")
+        print(f"[SUPABASE FARMER UPSERT ERROR] {e}")
+        try:
+            res = supabase_admin.table("farmers").upsert(db_f, on_conflict="phone").execute()
+            return res
+        except Exception as ex:
+            print(f"[SUPABASE FARMER UPSERT FATAL ERROR] {ex}")
 
 # ─── Slots & Bookings ───────────────────────────────────────────────────────
 def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
@@ -519,8 +510,7 @@ def get_farmer_bookings(phone: str = None, token: str = None):
                     "net_weight_quintals": p.get("net_weight_quintals"),
                     "moisture_percentage": p.get("moisture_percentage"),
                     "quality_grade": p.get("quality_grade"),
-                    "total_payable_amount": p.get("total_payable_amount"),
-                    "document_url": p.get("document_url")
+                    "total_payable_amount": p.get("total_payable_amount")
                 })
                 pt_res = supabase_admin.table("payment_transactions").select("*").eq("procurement_id", p.get("id")).execute()
                 if pt_res.data and len(pt_res.data) > 0:
@@ -535,8 +525,7 @@ def get_farmer_bookings(phone: str = None, token: str = None):
                         "net_weight_quintals": p.get("net_weight_quintals"),
                         "moisture_percentage": p.get("moisture_percentage"),
                         "quality_grade": p.get("quality_grade"),
-                        "total_payable_amount": p.get("total_payable_amount"),
-                        "document_url": p.get("document_url")
+                        "total_payable_amount": p.get("total_payable_amount")
                     })
                     for pt in _local_store["payments"].values():
                         if pt.get("procurement_id") == p.get("id"):
@@ -576,8 +565,7 @@ def get_farmer_bookings(phone: str = None, token: str = None):
                             "net_weight_quintals": p.get("net_weight_quintals"),
                             "moisture_percentage": p.get("moisture_percentage"),
                             "quality_grade": p.get("quality_grade"),
-                            "total_payable_amount": p.get("total_payable_amount"),
-                            "document_url": p.get("document_url")
+                            "total_payable_amount": p.get("total_payable_amount")
                         })
                         pt_res = supabase_admin.table("payment_transactions").select("*").eq("procurement_id", p.get("id")).execute()
                         if pt_res.data and len(pt_res.data) > 0:
@@ -592,8 +580,7 @@ def get_farmer_bookings(phone: str = None, token: str = None):
                                 "net_weight_quintals": p.get("net_weight_quintals"),
                                 "moisture_percentage": p.get("moisture_percentage"),
                                 "quality_grade": p.get("quality_grade"),
-                                "total_payable_amount": p.get("total_payable_amount"),
-                                "document_url": p.get("document_url")
+                                "total_payable_amount": p.get("total_payable_amount")
                             })
                             for pt in _local_store["payments"].values():
                                 if pt.get("procurement_id") == p.get("id"):

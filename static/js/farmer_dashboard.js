@@ -569,18 +569,6 @@ function populateProfile() {
   if (el('profile-bank-acc')) el('profile-bank-acc').textContent = f.bank_account_no ? '•••• ' + f.bank_account_no.slice(-4) : '--';
   if (el('profile-ifsc')) el('profile-ifsc').textContent = `${f.bank_ifsc || '--'} (${f.bank_name || '--'})`;
   if (el('profile-upi')) el('profile-upi').textContent = f.upi_id || 'Not set';
-  
-  if (el('profile-doc-link')) {
-    if (f.document_url) {
-      el('profile-doc-link').innerHTML = `
-        <a href="${f.document_url}" target="_blank" style="color:#22c55e; font-weight:700; display:inline-flex; align-items:center; gap:0.35rem; text-decoration:underline;">
-          📄 View Verified Document (Supabase Storage) &nearr;
-        </a>
-      `;
-    } else {
-      el('profile-doc-link').textContent = 'No document attached';
-    }
-  }
 }
 
 // ─── Real-time Live Call Alert Modal ────────────────

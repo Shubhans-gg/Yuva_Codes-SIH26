@@ -49,48 +49,6 @@ const SupabaseAuth = {
     }, 4500);
   },
 
-  // ─── Supabase Storage Upload ─────────────────────
-  async uploadFile(file, folder = 'documents') {
-    if (!file) return null;
-    
-    // 1. Try direct Supabase JS upload if client is available
-    const client = this.getClient();
-    if (client) {
-      try {
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-        const { data, error } = await client.storage
-          .from('smartprocure-documents')
-          .upload(filePath, file, { upsert: true });
-
-        if (!error && data) {
-          const { data: urlData } = client.storage
-            .from('smartprocure-documents')
-            .getPublicUrl(filePath);
-          return urlData.publicUrl;
-        }
-      } catch (e) {
-        console.warn('Direct Supabase Storage upload failed, falling back to server endpoint:', e);
-      }
-    }
-
-    // 2. Fallback to Flask backend upload endpoint
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', folder);
-
-    const res = await fetch('/api/storage/upload', {
-      method: 'POST',
-      body: formData
-    });
-    const result = await res.json();
-    if (result.success) {
-      return result.url;
-    } else {
-      throw new Error(result.error || 'File upload failed');
-    }
-  },
-
   // ─── Supabase Auth: Sign In with Password ────────
   async signInWithPassword(email, password) {
     const client = this.getClient();

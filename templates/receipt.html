@@ -345,20 +345,7 @@
       </div>
     </div>
 
-    <!-- Attached Weighbridge Slip / Document from Supabase Storage -->
-    {% if r.document_url %}
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #334155;">
-        <span>📸</span>
-        <span><strong>Weighbridge & Quality Verification Slip:</strong> Stored in Supabase Storage</span>
-      </div>
-      <a href="{{ r.document_url }}" target="_blank" style="background: #0284c7; color: white; text-decoration: none; padding: 0.3rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">
-        📄 View Document &nearr;
-      </a>
-    </div>
-    {% endif %}
-
-    <!-- Signatures -->
+    <!-- Official Seal & Signature -->
     <div class="signature-area">
       <div class="sign-box">
         <div class="sign-line"></div>

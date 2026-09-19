@@ -312,25 +312,6 @@ function updateScaleDisplay() {
   if (document.getElementById('calc-net-qtl')) document.getElementById('calc-net-qtl').textContent = netQtl + ' Qtl';
 }
 
-async function handleWeighDocUpload(input) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const statusEl = document.getElementById('weigh-doc-status');
-  if (statusEl) statusEl.innerHTML = `⏳ Uploading <strong>${file.name}</strong> to Supabase Storage...`;
-
-  try {
-    const url = await SupabaseAuth.uploadFile(file, 'weighbridge_slips');
-    if (url) {
-      document.getElementById('weigh-doc-url').value = url;
-      if (statusEl) statusEl.innerHTML = `✅ <strong>${file.name}</strong> stored in Supabase Storage!`;
-      showToast('Weighbridge slip uploaded to Supabase Storage!', 'success');
-    }
-  } catch(e) {
-    if (statusEl) statusEl.textContent = `❌ Upload error: ${e.message}`;
-    showToast('Failed to upload slip to storage.', 'error');
-  }
-}
-
 async function recordProcurement(e) {
   e.preventDefault();
   const token = document.getElementById('procurement-token-hidden').value;
@@ -341,7 +322,6 @@ async function recordProcurement(e) {
   const moisture = parseFloat(document.getElementById('weigh-moisture-pct').value);
   const grade = document.getElementById('weigh-quality-grade').value;
   const notes = document.getElementById('weigh-notes').value;
-  const docUrl = document.getElementById('weigh-doc-url')?.value || '';
 
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = '⏳ Recording & Syncing with Supabase...';
@@ -353,7 +333,6 @@ async function recordProcurement(e) {
       body: JSON.stringify({
         token_number: token, gross_weight_kg: gross, tare_weight_kg: tare,
         moisture_percentage: moisture, quality_grade: grade, operator_notes: notes,
-        document_url: docUrl,
         verified_by: adminSession.full_name || 'Procurement Officer'
       })
     });
