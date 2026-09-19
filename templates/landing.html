@@ -28,7 +28,8 @@
     </h2>
 
     <p class="hero-subtitle-main" data-i18n="hero_subtitle">
-      Book your Mandi slot, track live queue positions, and receive guaranteed MSP payments directly to your bank — all from your mobile.
+      Book your Mandi slot, track live queue positions, and receive guaranteed MSP payments directly to your bank — all
+      from your mobile.
     </p>
 
     <div class="hero-cta-group">
@@ -88,7 +89,8 @@
   <div class="section-header">
     <div class="section-tag" data-i18n="msp_tag">📊 Government Approved</div>
     <h2 class="section-title" data-i18n="msp_title">2026-27 Minimum Support Prices (MSP)</h2>
-    <p class="section-desc" data-i18n="msp_desc">Officially notified MSP rates for Kharif & Rabi crops as per Cabinet Committee on Economic Affairs (CCEA)</p>
+    <p class="section-desc" data-i18n="msp_desc">Officially notified MSP rates for Kharif & Rabi crops as per Cabinet
+      Committee on Economic Affairs (CCEA)</p>
   </div>
 
   <div class="crop-prices-grid" id="crop-prices-grid">
@@ -112,25 +114,30 @@
   <div class="section-header">
     <div class="section-tag" data-i18n="finder_tag">📍 Find Nearby</div>
     <h2 class="section-title" data-i18n="finder_title">Locate Nearest Procurement Centre</h2>
-    <p class="section-desc" data-i18n="finder_desc">Search by city or district to find government procurement Mandis near you</p>
+    <p class="section-desc" data-i18n="finder_desc">Search by city or district to find government procurement Mandis
+      near you</p>
   </div>
 
   <div class="centre-finder-box">
     <div class="map-search-bar" style="flex-wrap: wrap;">
-      <select id="map-crop-filter" class="map-search-input" style="max-width: 200px; cursor: pointer; background-color: #f8fafc;" onchange="filterCentresByCrop()">
+      <select id="map-crop-filter" class="map-search-input"
+        style="max-width: 200px; cursor: pointer; background-color: #f8fafc;" onchange="filterCentresByCrop()">
         <option value="" data-i18n="all_crops">🌾 All Crops</option>
         {% for crop in crops %}
         <option value="{{ crop.id }}">{{ crop.crop_name }}</option>
         {% endfor %}
       </select>
       <input type="text" id="map-search-input" class="map-search-input" style="flex: 1; min-width: 240px;"
-        placeholder="Enter city, district or pincode... e.g. Karnal, Ludhiana" value="" autocomplete="off" data-i18n-placeholder="search_placeholder">
+        placeholder="Enter city, district or pincode... e.g. Karnal, Ludhiana" value="" autocomplete="off"
+        data-i18n-placeholder="search_placeholder">
       <div class="map-search-actions">
-        <button class="btn-locate" id="btn-geolocate" onclick="geoLocateMe()" aria-label="Use current location" data-i18n="btn_use_location">
+        <button class="btn-locate" id="btn-geolocate" onclick="geoLocateMe()" aria-label="Use current location"
+          data-i18n="btn_use_location">
           📍 Use My Location
         </button>
         <button class="btn-locate" id="btn-search-map" onclick="searchMapLocation()"
-          style="background: linear-gradient(135deg, #1d4ed8, #3b82f6);" aria-label="Search Mandi" data-i18n="btn_search">
+          style="background: linear-gradient(135deg, #1d4ed8, #3b82f6);" aria-label="Search Mandi"
+          data-i18n="btn_search">
           🔍 Search
         </button>
       </div>
@@ -163,20 +170,26 @@
             id="centre-list-{{ centre.id }}" role="button" tabindex="0">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
               <div class="centre-item-name">{{ centre.name }}</div>
-              <span class="dist-badge" id="dist-badge-{{ centre.id }}" style="display:none; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.4rem; background: #e0f2fe; color: #0369a1; border-radius: 0.3rem; white-space: nowrap;"></span>
+              <span class="dist-badge" id="dist-badge-{{ centre.id }}"
+                style="display:none; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.4rem; background: #e0f2fe; color: #0369a1; border-radius: 0.3rem; white-space: nowrap;"></span>
             </div>
             <div class="centre-item-address">📍 {{ centre.location_address }}</div>
             <div class="centre-item-badges" style="margin-top: 0.4rem;">
               <span class="centre-badge active">✓ {{ centre.status|title }}</span>
               <span class="centre-badge capacity">{{ centre.daily_capacity }} slots/day</span>
-              <span class="centre-badge" style="background: #f3e8ff; color: #6b21a8;">{{ centre.active_counters }} counters</span>
-              <span class="centre-badge wait-badge" id="wait-badge-{{ centre.id }}" style="background: #dcfce7; color: #15803d;">🟢 Low Queue</span>
+              <span class="centre-badge" style="background: #f3e8ff; color: #6b21a8;">{{ centre.active_counters }}
+                counters</span>
+              <span class="centre-badge wait-badge" id="wait-badge-{{ centre.id }}"
+                style="background: #dcfce7; color: #15803d;">🟢 Low Queue</span>
             </div>
             <div class="centre-item-actions" style="margin-top: 0.6rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-              <a href="https://www.google.com/maps/dir/?api=1&destination={{ centre.latitude }},{{ centre.longitude }}" target="_blank" class="btn-directions-gmaps" onclick="event.stopPropagation()" style="background: #1e293b; color: #38bdf8; text-decoration: none; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+              <a href="https://www.google.com/maps/dir/?api=1&destination={{ centre.latitude }},{{ centre.longitude }}"
+                target="_blank" class="btn-directions-gmaps" onclick="event.stopPropagation()"
+                style="background: #1e293b; color: #38bdf8; text-decoration: none; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;">
                 🗺️ Directions (Google Maps)
               </a>
-              <a href="/farmer/login" class="btn-book-slot-mini" onclick="event.stopPropagation()" style="background: #16a34a; color: #ffffff; text-decoration: none; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+              <a href="/farmer/login" class="btn-book-slot-mini" onclick="event.stopPropagation()"
+                style="background: #16a34a; color: #ffffff; text-decoration: none; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;">
                 🎫 Book Slot
               </a>
             </div>
@@ -195,7 +208,8 @@
   <div class="section-header">
     <div class="section-tag" data-i18n="how_tag">⚡ Simple 6-Step Process</div>
     <h2 class="section-title" data-i18n="how_title">How SmartProcure Works</h2>
-    <p class="section-desc" data-i18n="how_desc">From registration to payment in 6 easy steps — no paperwork, no queues</p>
+    <p class="section-desc" data-i18n="how_desc">From registration to payment in 6 easy steps — no paperwork, no queues
+    </p>
   </div>
 
   <div class="how-it-works-grid">
@@ -208,7 +222,8 @@
         <span class="step-icon-lg">📱</span>
       </div>
       <h3 class="step-card-title" data-i18n="step1_title">1. Register via Mobile OTP</h3>
-      <p class="step-card-desc" data-i18n="step1_desc">Verify your mobile number with OTP, then enter your Aadhaar & bank details once.</p>
+      <p class="step-card-desc" data-i18n="step1_desc">Verify your mobile number with OTP, then enter your Aadhaar &
+        bank details once.</p>
       <div class="step-chip" data-i18n="step1_chip">✨ One-Time Registration</div>
     </div>
 
@@ -221,7 +236,8 @@
         <span class="step-icon-lg">🎟️</span>
       </div>
       <h3 class="step-card-title" data-i18n="step2_title">2. Book a Guaranteed Slot</h3>
-      <p class="step-card-desc" data-i18n="step2_desc">Select your nearest Mandi, crop type, preferred date & time — get a digital token instantly.</p>
+      <p class="step-card-desc" data-i18n="step2_desc">Select your nearest Mandi, crop type, preferred date & time — get
+        a digital token instantly.</p>
       <div class="step-chip" data-i18n="step2_chip">🎟️ Instant Digital Pass</div>
     </div>
 
@@ -234,7 +250,8 @@
         <span class="step-icon-lg">🚚</span>
       </div>
       <h3 class="step-card-title" data-i18n="step3_title">3. Arrive & Quick Check-In</h3>
-      <p class="step-card-desc" data-i18n="step3_desc">Arrive at your booked time and check-in via phone. Skip the physical line entirely.</p>
+      <p class="step-card-desc" data-i18n="step3_desc">Arrive at your booked time and check-in via phone. Skip the
+        physical line entirely.</p>
       <div class="step-chip" data-i18n="step3_chip">🚫 Zero Physical Waiting</div>
     </div>
 
@@ -247,7 +264,8 @@
         <span class="step-icon-lg">📶</span>
       </div>
       <h3 class="step-card-title" data-i18n="step4_title">4. Track Live Queue Line</h3>
-      <p class="step-card-desc" data-i18n="step4_desc">Watch real-time token position and estimated wait time from your phone or tractor.</p>
+      <p class="step-card-desc" data-i18n="step4_desc">Watch real-time token position and estimated wait time from your
+        phone or tractor.</p>
       <div class="step-chip" data-i18n="step4_chip">📱 Live Phone Alerts</div>
     </div>
 
@@ -260,7 +278,8 @@
         <span class="step-icon-lg">⚖️</span>
       </div>
       <h3 class="step-card-title" data-i18n="step5_title">5. Digital Weighbridge & Quality Check</h3>
-      <p class="step-card-desc" data-i18n="step5_desc">Computerized transparent weighment & certified grading receipt created on the spot.</p>
+      <p class="step-card-desc" data-i18n="step5_desc">Computerized transparent weighment & certified grading receipt
+        created on the spot.</p>
       <div class="step-chip" data-i18n="step5_chip">⚖️ 100% Accurate Scale</div>
     </div>
 
@@ -273,7 +292,8 @@
         <span class="step-icon-lg">💰</span>
       </div>
       <h3 class="step-card-title" data-i18n="step6_title">6. Direct Bank Transfer (DBT)</h3>
-      <p class="step-card-desc" data-i18n="step6_desc">Full MSP payment credited directly to your bank account via PFMS — zero middlemen or fees.</p>
+      <p class="step-card-desc" data-i18n="step6_desc">Full MSP payment credited directly to your bank account via PFMS
+        — zero middlemen or fees.</p>
       <div class="step-chip" data-i18n="step6_chip">💰 100% Money to Bank Account</div>
     </div>
   </div>
@@ -284,7 +304,8 @@
 <!-- ======================================================= -->
 <section class="cta-banner">
   <h2 data-i18n="cta_title">Ready to Sell Your Crop at MSP?</h2>
-  <p data-i18n="cta_desc">Join thousands of farmers already benefiting from transparent, queue-free digital procurement</p>
+  <p data-i18n="cta_desc">Join thousands of farmers already benefiting from transparent, queue-free digital procurement
+  </p>
   <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
     <a href="/farmer/signup" class="btn-hero-farmer" data-i18n="btn_register_farmer">
       ✍️ Register as Farmer

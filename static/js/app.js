@@ -224,7 +224,7 @@ function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('smartprocure_lang', lang);
   document.documentElement.lang = lang;
-  
+
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (I18N[lang] && I18N[lang][key]) {

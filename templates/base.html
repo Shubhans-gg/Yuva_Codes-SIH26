@@ -50,18 +50,21 @@
 
       <nav class="nav-actions">
         {% block nav_links %}
-        <a href="/" class="btn-nav-link {% if request.path == '/' %}active{% else %}inactive{% endif %}" data-i18n="nav_home">
+        <a href="/" class="btn-nav-link {% if request.path == '/' %}active{% else %}inactive{% endif %}"
+          data-i18n="nav_home">
           🏠 Home
         </a>
         <a href="/farmer/login"
-          class="btn-nav-link {% if '/farmer' in request.path %}active{% else %}inactive{% endif %}" data-i18n="nav_farmer">
+          class="btn-nav-link {% if '/farmer' in request.path %}active{% else %}inactive{% endif %}"
+          data-i18n="nav_farmer">
           👨‍🌾 Farmer Portal
         </a>
-        <a href="/admin/login"
-          class="btn-nav-link {% if '/admin' in request.path %}active{% else %}inactive{% endif %}" data-i18n="nav_admin">
+        <a href="/admin/login" class="btn-nav-link {% if '/admin' in request.path %}active{% else %}inactive{% endif %}"
+          data-i18n="nav_admin">
           🏢 Admin Panel
         </a>
-        <a href="/display" class="btn-nav-link {% if request.path == '/display' %}active{% else %}inactive{% endif %}" data-i18n="nav_display">
+        <a href="/display" class="btn-nav-link {% if request.path == '/display' %}active{% else %}inactive{% endif %}"
+          data-i18n="nav_display">
           📺 Live Queue
         </a>
         {% endblock %}
@@ -154,7 +157,7 @@
       </div>
       <div>
         <p style="font-size: 0.75rem;">
-          Designed & Built by <strong>Yuva Codes</strong> • Tech: Flask + Leaflet.js + Vanilla JS
+          Designed & Built by <strong>Yuva Codes</strong>
         </p>
       </div>
     </div>
