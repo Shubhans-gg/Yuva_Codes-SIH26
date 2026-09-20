@@ -44,8 +44,19 @@ DEFAULT_CENTRES = [
     {"id": "CENTRE-02", "name": "Ludhiana Grain Hub", "code": "PB-LDH-02", "state": "Punjab", "district": "Ludhiana", "location_address": "Grain Market Road, Gill Road, Ludhiana", "pincode": "141003", "latitude": 30.9010, "longitude": 75.8573, "daily_capacity": 100, "active_counters": 5, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0161-2401928", "status": "active"},
     {"id": "CENTRE-03", "name": "Kota Agri Mandi Yard", "code": "RJ-KOT-03", "state": "Rajasthan", "district": "Kota", "location_address": "Anantpura Industrial Area, Kota", "pincode": "324005", "latitude": 25.1388, "longitude": 75.8340, "daily_capacity": 70, "active_counters": 3, "opening_time": "09:00", "closing_time": "17:00", "contact_phone": "0744-2391024", "status": "active"},
     {"id": "CENTRE-04", "name": "Indore Krishi Upaj Mandi", "code": "MP-IND-04", "state": "Madhya Pradesh", "district": "Indore", "location_address": "Laxmibai Nagar Mandi, Indore", "pincode": "452006", "latitude": 22.7533, "longitude": 75.8617, "daily_capacity": 90, "active_counters": 4, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0731-2539120", "status": "active"},
-    {"id": "CENTRE-05", "name": "Nizamabad APMC Market", "code": "TS-NZB-05", "state": "Telangana", "district": "Nizamabad", "location_address": "Market Yard, Bodhan Road, Nizamabad", "pincode": "503001", "latitude": 18.6725, "longitude": 78.0941, "daily_capacity": 65, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:00", "contact_phone": "08462-234190", "status": "active"}
+    {"id": "CENTRE-05", "name": "Nizamabad APMC Market", "code": "TS-NZB-05", "state": "Telangana", "district": "Nizamabad", "location_address": "Market Yard, Bodhan Road, Nizamabad", "pincode": "503001", "latitude": 18.6725, "longitude": 78.0941, "daily_capacity": 65, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:00", "contact_phone": "08462-234190", "status": "active"},
+    {"id": "CENTRE-06", "name": "Amritsar Grain Market", "code": "PB-AMR-06", "state": "Punjab", "district": "Amritsar", "location_address": "GT Road, Near Railway Station, Amritsar", "pincode": "143001", "latitude": 31.6340, "longitude": 74.8723, "daily_capacity": 85, "active_counters": 4, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0183-2210987", "status": "active"},
+    {"id": "CENTRE-07", "name": "Hisar Anaj Mandi Yard", "code": "HR-HIS-07", "state": "Haryana", "district": "Hisar", "location_address": "Delhi Road, Opp. Bus Stand, Hisar", "pincode": "125001", "latitude": 29.1492, "longitude": 75.7217, "daily_capacity": 75, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "01662-234567", "status": "active"},
+    {"id": "CENTRE-08", "name": "Fatehpur Main Krishi Upaj Mandi", "code": "UP-FTH-08", "state": "Uttar Pradesh", "district": "Fatehpur", "location_address": "Bypass Road, Near Collectorate, Fatehpur", "pincode": "212601", "latitude": 25.9279, "longitude": 80.8126, "daily_capacity": 80, "active_counters": 4, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "05180-223411", "status": "active"},
+    {"id": "CENTRE-09", "name": "Mathura APMC Mandi Hub", "code": "UP-MATH-09", "state": "Uttar Pradesh", "district": "Mathura", "location_address": "Highway Cut, NH-19, Mathura", "pincode": "281001", "latitude": 27.4924, "longitude": 77.6737, "daily_capacity": 70, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0565-2409812", "status": "active"},
+    {"id": "CENTRE-10", "name": "Ujjain Grain Procurement Complex", "code": "MP-UJJ-10", "state": "Madhya Pradesh", "district": "Ujjain", "location_address": "Agar Road, Chimanganj Mandi, Ujjain", "pincode": "456006", "latitude": 23.1765, "longitude": 75.7885, "daily_capacity": 85, "active_counters": 4, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0734-2551234", "status": "active"},
+    {"id": "CENTRE-11", "name": "Sri Ganganagar Krishi Mandi", "code": "RJ-GAN-11", "state": "Rajasthan", "district": "Sri Ganganagar", "location_address": "Grain Market Area, Sri Ganganagar", "pincode": "335001", "latitude": 29.9038, "longitude": 73.8772, "daily_capacity": 95, "active_counters": 5, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0154-2476543", "status": "active"},
+    {"id": "CENTRE-12", "name": "Latur Pulses & Grain Market", "code": "MH-LUR-12", "state": "Maharashtra", "district": "Latur", "location_address": "Market Yard, MIDC Phase 2, Latur", "pincode": "413531", "latitude": 18.4088, "longitude": 76.5604, "daily_capacity": 75, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "02382-243210", "status": "active"},
+    {"id": "CENTRE-13", "name": "Rajkot APMC Market Yard", "code": "GJ-RAJK-13", "state": "Gujarat", "district": "Rajkot", "location_address": "Bedi Market Yard, Morbi Road, Rajkot", "pincode": "360003", "latitude": 22.3039, "longitude": 70.8022, "daily_capacity": 90, "active_counters": 4, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0281-2458901", "status": "active"},
+    {"id": "CENTRE-14", "name": "Patna Gulzarbagh Grain Hub", "code": "BR-PAT-14", "state": "Bihar", "district": "Patna", "location_address": "Gulzarbagh Mandi Complex, Patna", "pincode": "800007", "latitude": 25.6093, "longitude": 85.1865, "daily_capacity": 65, "active_counters": 3, "opening_time": "09:00", "closing_time": "17:00", "contact_phone": "0612-2634120", "status": "active"},
+    {"id": "CENTRE-15", "name": "Burdwan Paddy Procurement Center", "code": "WB-BUR-15", "state": "West Bengal", "district": "Purba Bardhaman", "location_address": "Nawabhat Market Complex, Bardhaman", "pincode": "713101", "latitude": 23.2324, "longitude": 87.8615, "daily_capacity": 70, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0342-2665432", "status": "active"}
 ]
+
 
 DEFAULT_CROPS = [
     # --- Rabi Crops ---
@@ -198,6 +209,13 @@ def init_db():
             print("[SUPABASE] Seeded default admins into PostgreSQL.")
     except Exception as e:
         print(f"[SUPABASE SEED ADMINS NOTICE] {e}")
+
+    # Seed/Upsert official procurement centres into Supabase procurement_centres table
+    try:
+        for centre in DEFAULT_CENTRES:
+            supabase_admin.table("procurement_centres").upsert(centre, on_conflict="id").execute()
+    except Exception as e:
+        print(f"[SUPABASE SEED CENTRES NOTICE] {e}")
 
     # Seed/Upsert official CCEA MSP rates into Supabase crops_msp table
     try:

@@ -8,9 +8,9 @@
 {% endblock %}
 
 {% block nav_links %}
-<a href="/" class="btn-nav-link inactive">🏠 Home</a>
-<a href="/display" class="btn-nav-link inactive">📺 Live Queue</a>
-<span class="btn-nav-link active">🏢 Admin Dashboard</span>
+<a href="/" class="btn-nav-link inactive" data-i18n="nav_home">🏠 Home</a>
+<span class="btn-nav-link active" data-i18n="nav_admin_dashboard">🏢 Admin Dashboard</span>
+<a href="/admin/login" class="btn-nav-logout" onclick="logoutAdmin(event)" data-i18n="nav_logout">🚪 Logout</a>
 {% endblock %}
 
 {% block content %}
@@ -29,10 +29,6 @@
       </div>
 
       <div class="dashboard-header-actions">
-        <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); color: #93c5fd; font-size: 0.72rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 0.4rem;">
-          <span class="live-pulse" style="background:#3b82f6;"></span>
-          <span>⚡ Supabase Realtime Live</span>
-        </div>
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <label style="font-size: 0.82rem; color: rgba(255,255,255,0.6);">Active Mandi:</label>
           <select id="admin-centre-select" class="form-control" style="background: #1e293b; color: white; border-color: #334155; width: auto; font-size: 0.82rem; padding: 0.4rem 0.75rem;" onchange="reloadAdminData()">
@@ -41,10 +37,10 @@
             {% endfor %}
           </select>
         </div>
-        <a href="/admin/login" class="btn-logout" onclick="logoutAdmin(event)">🚪 Logout</a>
       </div>
     </div>
   </div>
+
 
   <!-- Tab Navigation -->
   <div class="dashboard-tabs-nav">

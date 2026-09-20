@@ -98,11 +98,6 @@ function setBookingQty(val) {
   updateMSPPreview();
 }
 
-function setVehicle(v) {
-  const input = document.getElementById('book-vehicle-input');
-  if (!input) return;
-  input.value = v;
-}
 
 // ─── Summary Stats ─────────────────────────────────
 async function loadSummaryStats() {
@@ -183,8 +178,7 @@ function updateMSPPreview() {
       centreId: document.getElementById('book-centre-select')?.value,
       cropId: cropSel.value,
       date: document.getElementById('book-date-input')?.value,
-      qty: qty,
-      vehicle: document.getElementById('book-vehicle-input')?.value
+      qty: qty
     };
     localStorage.setItem('smartprocure_draft_booking', JSON.stringify(draft));
   } catch(e) {}
@@ -264,7 +258,6 @@ async function confirmBooking() {
   const cropId = document.getElementById('book-crop-select')?.value;
   const date = document.getElementById('book-date-input')?.value;
   const qty = document.getElementById('book-qty-input')?.value;
-  const vehicle = document.getElementById('book-vehicle-input')?.value;
 
   if (!centreId || !cropId || !date) return showToast('Please fill all booking details', 'error');
 
@@ -281,8 +274,7 @@ async function confirmBooking() {
         crop_id: cropId,
         booking_date: date,
         time_slot: selectedSlot,
-        estimated_quantity_quintals: parseFloat(qty) || 40,
-        vehicle_number: vehicle || 'TRACTOR-TROLLEY'
+        estimated_quantity_quintals: parseFloat(qty) || 40
       })
     });
     const data = await res.json();
@@ -649,8 +641,6 @@ function initFarmerRealtime() {
 document.addEventListener('DOMContentLoaded', () => {
   const qtyEl = document.getElementById('book-qty-input');
   if (qtyEl) qtyEl.addEventListener('input', updateMSPPreview);
-  const vehicleEl = document.getElementById('book-vehicle-input');
-  if (vehicleEl) vehicleEl.addEventListener('input', updateBookingPreview);
   const centreEl = document.getElementById('book-centre-select');
   if (centreEl) centreEl.addEventListener('change', updateBookingPreview);
   const dateEl = document.getElementById('book-date-input');

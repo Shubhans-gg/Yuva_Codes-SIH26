@@ -10,11 +10,14 @@ const I18N = {
     nav_home: "🏠 Home",
     nav_farmer: "👨‍🌾 Farmer Portal",
     nav_admin: "🏢 Admin Panel",
+    nav_dashboard: "👨‍🌾 My Dashboard",
+    nav_admin_dashboard: "🏢 Admin Dashboard",
     nav_display: "📺 Live Queue",
+    nav_logout: "🚪 Logout",
+
     lang_btn: "हिंदी",
     mob_nav_home: "Home",
     mob_nav_book: "Book Slot",
-    mob_nav_queue: "Live Queue",
     mob_nav_sms: "SMS Alerts",
 
     // Hero Section
@@ -116,11 +119,14 @@ const I18N = {
     nav_home: "🏠 मुख्य पृष्ठ",
     nav_farmer: "👨‍🌾 किसान पोर्टल",
     nav_admin: "🏢 एडमिन पैनल",
+    nav_dashboard: "👨‍🌾 मेरा डैशबोर्ड",
+    nav_admin_dashboard: "🏢 एडमिन डैशबोर्ड",
     nav_display: "📺 लाइव कतार",
+    nav_logout: "🚪 लॉगआउट",
+
     lang_btn: "English",
     mob_nav_home: "मुख्य",
     mob_nav_book: "स्लॉट बुक",
-    mob_nav_queue: "लाइव कतार",
     mob_nav_sms: "एसएमएस",
 
     // Hero Section
@@ -248,11 +254,16 @@ function setLanguage(lang) {
   if (mobLangLabel) {
     mobLangLabel.textContent = lang === 'en' ? 'हिंदी' : 'English';
   }
+
+  try {
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
+  } catch(e) {}
 }
 
 function toggleLanguage() {
   setLanguage(currentLang === 'en' ? 'hi' : 'en');
 }
+
 
 // Speech Synthesis Announcement for Rural & Sunlight Accessibility
 function speakAnnouncement(text, lang = currentLang) {
@@ -557,9 +568,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileSheetTouch();
   initNetworkWatcher();
   initRealtimeStream();
-
-  const langBtn = document.getElementById('lang-toggle-btn');
-  if (langBtn) {
-    langBtn.addEventListener('click', toggleLanguage);
-  }
 });
+

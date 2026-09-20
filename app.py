@@ -112,8 +112,7 @@ def view_receipt(receipt_no):
         "crop_hindi": crop.get("hindi_name"),
         "crop_category": crop.get("category"),
         "booking_date": booking.get("booking_date"),
-        "time_slot": booking.get("time_slot"),
-        "vehicle_number": booking.get("vehicle_number")
+        "time_slot": booking.get("time_slot")
     }
 
     return render_template('receipt.html', config=Config, r=receipt_data)
@@ -384,7 +383,6 @@ def create_booking():
     booking_date = data.get('booking_date', datetime.date.today().isoformat())
     time_slot = data.get('time_slot')
     estimated_qty = float(data.get('estimated_quantity_quintals', 20.0))
-    vehicle_no = data.get('vehicle_number', 'TRACTOR-TROLLEY')
 
     if not farmer_id or not centre_id or not crop_id or not time_slot:
         return jsonify({"success": False, "error": "Missing required booking details"}), 400
@@ -413,7 +411,6 @@ def create_booking():
         "booking_date": booking_date,
         "time_slot": time_slot,
         "estimated_quantity_quintals": estimated_qty,
-        "vehicle_number": vehicle_no,
         "booking_status": "booked",
         "created_at": now_iso
     }

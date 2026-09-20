@@ -69,7 +69,8 @@
         </a>
         {% endblock %}
 
-        <button id="lang-toggle-btn" class="lang-btn" title="Toggle Language" aria-label="Toggle Language">
+
+        <button id="lang-toggle-btn" class="lang-btn" title="Toggle Language" aria-label="Toggle Language" onclick="toggleLanguage()">
           🇮🇳 <span>हिंदी</span>
         </button>
       </nav>
@@ -92,10 +93,6 @@
       <span class="mob-nav-icon">🎫</span>
       <span class="mob-nav-label" data-i18n="mob_nav_book">Book Slot</span>
     </a>
-    <a href="/display" class="mobile-nav-item {% if request.path == '/display' %}active{% endif %}" id="mob-nav-queue">
-      <span class="mob-nav-icon">📺</span>
-      <span class="mob-nav-label" data-i18n="mob_nav_queue">Live Queue</span>
-    </a>
     <button type="button" class="mobile-nav-item" id="mob-nav-sms" onclick="SMSDrawer.open()"
       aria-label="Open SMS alerts">
       <span class="mob-nav-icon">
@@ -104,6 +101,7 @@
       </span>
       <span class="mob-nav-label" data-i18n="mob_nav_sms">SMS Alerts</span>
     </button>
+
     <button type="button" class="mobile-nav-item" id="mob-nav-lang" onclick="toggleLanguage()"
       aria-label="Change Language">
       <span class="mob-nav-icon">🌐</span>

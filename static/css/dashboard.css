@@ -250,6 +250,50 @@
   align-items: start;
 }
 
+/* Slot Items & Active Selection Highlight */
+.slot-item {
+  border: 2px solid #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 0.85rem;
+  background: white;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.slot-item:hover:not(.disabled) {
+  border-color: #10b981;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.slot-item.selected {
+  border-color: #059669 !important;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3), 0 6px 16px rgba(5, 150, 105, 0.2) !important;
+  transform: translateY(-2px) scale(1.02);
+}
+
+.slot-item.selected .slot-time {
+  color: #065f46 !important;
+  font-weight: 900 !important;
+}
+
+.slot-item.selected::after {
+  content: '✓ Selected';
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background: #059669;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+
 .booking-inputs-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
