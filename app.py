@@ -397,8 +397,7 @@ def create_booking():
         return jsonify({"success": False, "error": "Farmer, Centre or Crop record not found"}), 404
 
 
-    token_count = get_booking_count_by_date(centre_id, booking_date) + 1
-    token_number = f"DOCA-26-P{token_count:03d}"
+    token_number = get_next_token_number(centre_id, booking_date)
     booking_id = f"BOOK-{uuid.uuid4().hex[:8].upper()}"
     now_iso = datetime.datetime.now().isoformat()
 

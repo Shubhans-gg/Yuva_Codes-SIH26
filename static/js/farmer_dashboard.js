@@ -77,7 +77,7 @@ function switchTab(tabName) {
 
   try {
     history.replaceState(null, null, '#' + tabName);
-  } catch(e) {}
+  } catch (e) { }
 }
 
 // ─── Mobile Quantity Steppers & Vehicle Helpers ──────
@@ -103,14 +103,14 @@ function setBookingQty(val) {
 async function loadSummaryStats() {
   if (!farmerSession) return;
   try {
-    const res = await fetch(`/api/farmer/track?phone=${farmerSession.phone}`);
+    const res = await fetch(`/api/farmer/track?phone=${encodeURIComponent(farmerSession.phone)}`);
     const data = await res.json();
     if (!data.success) return;
 
     const bookings = data.bookings || [];
     const completedQty = bookings.reduce((sum, b) => sum + (b.net_weight_quintals || 0), 0);
     const totalPay = bookings.reduce((sum, b) => sum + (b.total_payable_amount || 0), 0);
-    const activeBook = bookings.find(b => ['booked','checked_in','called'].includes(b.booking_status));
+    const activeBook = bookings.find(b => ['booked', 'checked_in', 'called'].includes(b.booking_status));
 
     const el = id => document.getElementById(id);
     if (el('sum-total-bookings')) el('sum-total-bookings').textContent = bookings.length;
@@ -124,7 +124,7 @@ async function loadSummaryStats() {
       badgeEl.textContent = bookings.length;
       badgeEl.style.display = '';
     }
-  } catch(e) { console.warn('Stats load error', e); }
+  } catch (e) { console.warn('Stats load error', e); }
 }
 
 // ─── Booking Form ───────────────────────────────────
@@ -145,7 +145,7 @@ function initBookingForm() {
       if (draft.qty && document.getElementById('book-qty-input')) document.getElementById('book-qty-input').value = draft.qty;
       if (draft.vehicle && document.getElementById('book-vehicle-input')) document.getElementById('book-vehicle-input').value = draft.vehicle;
     }
-  } catch(e) {}
+  } catch (e) { }
 
   updateBookingPreview();
   loadSlots();
@@ -166,7 +166,7 @@ function updateMSPPreview() {
   const kgEl = document.getElementById('preview-kg-sub');
 
   if (mspEl) mspEl.textContent = '₹' + msp.toLocaleString('en-IN');
-  if (totalEl) totalEl.textContent = total > 0 ? '₹' + total.toLocaleString('en-IN', {maximumFractionDigits: 0}) : '₹—';
+  if (totalEl) totalEl.textContent = total > 0 ? '₹' + total.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '₹—';
   if (cropEl) cropEl.textContent = opt.text.split('(')[0].trim();
   if (kgEl) kgEl.textContent = ((qty || 0) * 100).toLocaleString('en-IN') + ' kg';
 
@@ -181,7 +181,7 @@ function updateMSPPreview() {
       qty: qty
     };
     localStorage.setItem('smartprocure_draft_booking', JSON.stringify(draft));
-  } catch(e) {}
+  } catch (e) { }
 }
 
 function updateBookingPreview() {
@@ -192,7 +192,7 @@ function updateBookingPreview() {
   if (!centreSel) return;
 
   const centreText = centreSel.options[centreSel.selectedIndex]?.text?.split('—')[0]?.trim() || '—';
-  const dateVal = dateInput?.value ? new Date(dateInput.value).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : '—';
+  const dateVal = dateInput?.value ? new Date(dateInput.value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
   const qty = qtyInput?.value ? qtyInput.value + ' Qtl' : '—';
 
   const el = id => document.getElementById(id);
@@ -237,7 +237,7 @@ async function loadSlots() {
         </div>
       `;
     }).join('');
-  } catch(e) {
+  } catch (e) {
     container.innerHTML = '<div style="text-align:center;padding:1rem;color:#ef4444;">Error loading slots</div>';
   }
 }
@@ -267,7 +267,7 @@ async function confirmBooking() {
   try {
     const res = await fetch('/api/bookings', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         farmer_id: farmerSession.id,
         centre_id: centreId,
@@ -296,7 +296,7 @@ async function confirmBooking() {
     } else {
       showToast(data.error || 'Booking failed', 'error');
     }
-  } catch(e) {
+  } catch (e) {
     showToast('Network error. Please try again.', 'error');
   }
   btn.disabled = false; btn.textContent = '🎫 Confirm Slot & Generate Digital Token';
@@ -309,7 +309,7 @@ async function loadMyBookings() {
   if (!container) return;
 
   try {
-    const res = await fetch(`/api/farmer/track?phone=${farmerSession.phone}`);
+    const res = await fetch(`/api/farmer/track?phone=${encodeURIComponent(farmerSession.phone)}`);
     const data = await res.json();
     if (!data.success || !data.bookings.length) {
       container.innerHTML = `<div class="empty-state">
@@ -330,13 +330,13 @@ async function loadMyBookings() {
         <div class="booking-card-top">
           <div class="booking-token-chip">${b.token_number}</div>
           <div class="booking-status-pill ${statusColors[b.booking_status] || 'status-booked'}">
-            ${(b.booking_status||'booked').replace('_',' ').toUpperCase()}
+            ${(b.booking_status || 'booked').replace('_', ' ').toUpperCase()}
           </div>
         </div>
         <div class="booking-card-details">
           <div class="booking-detail-item">
             <div class="label">📅 Date</div>
-            <div class="value">${new Date(b.booking_date).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})}</div>
+            <div class="value">${new Date(b.booking_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
           </div>
           <div class="booking-detail-item">
             <div class="label">⏰ Time Slot</div>
@@ -357,7 +357,7 @@ async function loadMyBookings() {
           </div>
           <div class="booking-detail-item">
             <div class="label">💰 Amount</div>
-            <div class="value" style="color:#16a34a;">₹${(b.total_payable_amount||0).toLocaleString('en-IN')}</div>
+            <div class="value" style="color:#16a34a;">₹${(b.total_payable_amount || 0).toLocaleString('en-IN')}</div>
           </div>
           ` : ''}
         </div>
@@ -367,7 +367,7 @@ async function loadMyBookings() {
         </div>
       </div>
     `).join('');
-  } catch(e) {
+  } catch (e) {
     console.warn('Bookings load error', e);
   }
 }
@@ -383,7 +383,7 @@ async function checkInToken(bookingId) {
     } else {
       showToast(data.error, 'error');
     }
-  } catch(e) { showToast('Error checking in', 'error'); }
+  } catch (e) { showToast('Error checking in', 'error'); }
 }
 
 // ─── Token Tracker ──────────────────────────────────
@@ -411,11 +411,11 @@ async function trackToken() {
 
     const b = data.booking;
     const steps = [
-      { key: 'booked',     icon: '📋', label: 'Slot Booked',         desc: 'Your time slot has been confirmed' },
+      { key: 'booked', icon: '📋', label: 'Slot Booked', desc: 'Your time slot has been confirmed' },
       { key: 'checked_in', icon: '✅', label: 'Arrived & Checked In', desc: 'You have checked in at the Mandi gate' },
-      { key: 'called',     icon: '📢', label: 'Called to Desk',       desc: b.desk_name ? `Called to ${b.desk_name}` : 'Your token has been called to the counter' },
-      { key: 'completed',  icon: '⚖️', label: 'Procurement Done',     desc: b.receipt_number ? `Receipt: ${b.receipt_number}` : 'Weighment & quality check completed' },
-      { key: 'paid',       icon: '💳', label: 'Payment Credited',     desc: b.dbt_reference_utr ? `UTR: ${b.dbt_reference_utr}` : 'DBT transfer to your bank account' }
+      { key: 'called', icon: '📢', label: 'Called to Desk', desc: b.desk_name ? `Called to ${b.desk_name}` : 'Your token has been called to the counter' },
+      { key: 'completed', icon: '⚖️', label: 'Procurement Done', desc: b.receipt_number ? `Receipt: ${b.receipt_number}` : 'Weighment & quality check completed' },
+      { key: 'paid', icon: '💳', label: 'Payment Credited', desc: b.dbt_reference_utr ? `UTR: ${b.dbt_reference_utr}` : 'DBT transfer to your bank account' }
     ];
 
     const statusOrder = ['booked', 'checked_in', 'called', 'completed'];
@@ -476,7 +476,7 @@ async function trackToken() {
         </div>
       </div>
     `;
-  } catch(e) {
+  } catch (e) {
     container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">Error</div><div class="empty-state-desc">Failed to fetch tracking info. Please try again.</div></div>';
   }
 }
@@ -488,7 +488,7 @@ async function loadPaymentStatus() {
   if (!container) return;
 
   try {
-    const res = await fetch(`/api/farmer/track?phone=${farmerSession.phone}`);
+    const res = await fetch(`/api/farmer/track?phone=${encodeURIComponent(farmerSession.phone)}`);
     const data = await res.json();
     if (!data.success) return;
 
@@ -505,10 +505,10 @@ async function loadPaymentStatus() {
           <div class="passbook-header">
             <div>
               <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">🏛️ Mandi Procurement DBT Credit</div>
-              <div style="font-size:0.95rem; font-weight:800; color:#0f172a;">${b.crop_name} (${b.net_weight_quintals||'--'} Qtl)</div>
+              <div style="font-size:0.95rem; font-weight:800; color:#0f172a;">${b.crop_name} (${b.net_weight_quintals || '--'} Qtl)</div>
             </div>
             <div style="text-align:right;">
-              <span style="display:inline-block; padding:0.3rem 0.75rem; border-radius:1rem; font-size:0.75rem; font-weight:800; background:${isPaid?'#dcfce7':'#fef9c3'}; color:${isPaid?'#15803d':'#854d0e'};">
+              <span style="display:inline-block; padding:0.3rem 0.75rem; border-radius:1rem; font-size:0.75rem; font-weight:800; background:${isPaid ? '#dcfce7' : '#fef9c3'}; color:${isPaid ? '#15803d' : '#854d0e'};">
                 ${isPaid ? '✅ CREDITED TO BANK' : '⏳ PROCESSING'}
               </span>
             </div>
@@ -516,7 +516,7 @@ async function loadPaymentStatus() {
 
           <div style="margin-bottom:0.85rem;">
             <div style="font-size:0.7rem; color:#64748b; text-transform:uppercase; font-weight:600;">Disbursed Amount (₹)</div>
-            <div class="passbook-amount">₹${(b.total_payable_amount||0).toLocaleString('en-IN')}</div>
+            <div class="passbook-amount">₹${(b.total_payable_amount || 0).toLocaleString('en-IN')}</div>
           </div>
 
           <div class="passbook-grid">
@@ -543,7 +543,7 @@ async function loadPaymentStatus() {
         </div>
       `;
     }).join('');
-  } catch(e) { console.warn('Payment load error', e); }
+  } catch (e) { console.warn('Payment load error', e); }
 }
 
 // ─── Profile ────────────────────────────────────────
@@ -602,7 +602,7 @@ function showCallAlertModal(token, deskName) {
       const msg = new SpeechSynthesisUtterance(`Token ${token}, please proceed to ${deskName || 'Counter Desk'}`);
       msg.rate = 0.95;
       window.speechSynthesis.speak(msg);
-    } catch(e) {}
+    } catch (e) { }
   }
 }
 
@@ -615,7 +615,7 @@ function initFarmerRealtime() {
           console.log('[Supabase Realtime] Farmer slot_bookings change:', payload);
           loadSummaryStats();
           loadMyBookings();
-          
+
           if (payload.new && payload.new.booking_status === 'called') {
             showCallAlertModal(payload.new.token_number, 'Assigned Counter Desk');
           } else if (payload.new && payload.new.booking_status === 'completed') {
@@ -631,7 +631,7 @@ function initFarmerRealtime() {
         .subscribe((status) => {
           console.log('[Supabase Realtime] Farmer subscription status:', status);
         });
-    } catch(e) {
+    } catch (e) {
       console.warn('Farmer Realtime init error:', e);
     }
   }

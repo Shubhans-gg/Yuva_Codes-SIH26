@@ -40,21 +40,21 @@ def _async_run(func, *args, **kwargs):
 
 # Fallback catalog data
 DEFAULT_CENTRES = [
-    {"id": "CENTRE-01", "name": "Karnal Central Anaj Mandi", "code": "HR-KAR-01", "state": "Haryana", "district": "Karnal", "location_address": "Sector 4, GT Road, Karnal", "pincode": "132001", "latitude": 29.6857, "longitude": 76.9905, "daily_capacity": 80, "active_counters": 4, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0184-2254321", "status": "active"},
-    {"id": "CENTRE-02", "name": "Ludhiana Grain Hub", "code": "PB-LDH-02", "state": "Punjab", "district": "Ludhiana", "location_address": "Grain Market Road, Gill Road, Ludhiana", "pincode": "141003", "latitude": 30.9010, "longitude": 75.8573, "daily_capacity": 100, "active_counters": 5, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0161-2401928", "status": "active"},
-    {"id": "CENTRE-03", "name": "Kota Agri Mandi Yard", "code": "RJ-KOT-03", "state": "Rajasthan", "district": "Kota", "location_address": "Anantpura Industrial Area, Kota", "pincode": "324005", "latitude": 25.1388, "longitude": 75.8340, "daily_capacity": 70, "active_counters": 3, "opening_time": "09:00", "closing_time": "17:00", "contact_phone": "0744-2391024", "status": "active"},
-    {"id": "CENTRE-04", "name": "Indore Krishi Upaj Mandi", "code": "MP-IND-04", "state": "Madhya Pradesh", "district": "Indore", "location_address": "Laxmibai Nagar Mandi, Indore", "pincode": "452006", "latitude": 22.7533, "longitude": 75.8617, "daily_capacity": 90, "active_counters": 4, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0731-2539120", "status": "active"},
-    {"id": "CENTRE-05", "name": "Nizamabad APMC Market", "code": "TS-NZB-05", "state": "Telangana", "district": "Nizamabad", "location_address": "Market Yard, Bodhan Road, Nizamabad", "pincode": "503001", "latitude": 18.6725, "longitude": 78.0941, "daily_capacity": 65, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:00", "contact_phone": "08462-234190", "status": "active"},
-    {"id": "CENTRE-06", "name": "Amritsar Grain Market", "code": "PB-AMR-06", "state": "Punjab", "district": "Amritsar", "location_address": "GT Road, Near Railway Station, Amritsar", "pincode": "143001", "latitude": 31.6340, "longitude": 74.8723, "daily_capacity": 85, "active_counters": 4, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0183-2210987", "status": "active"},
-    {"id": "CENTRE-07", "name": "Hisar Anaj Mandi Yard", "code": "HR-HIS-07", "state": "Haryana", "district": "Hisar", "location_address": "Delhi Road, Opp. Bus Stand, Hisar", "pincode": "125001", "latitude": 29.1492, "longitude": 75.7217, "daily_capacity": 75, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "01662-234567", "status": "active"},
-    {"id": "CENTRE-08", "name": "Fatehpur Main Krishi Upaj Mandi", "code": "UP-FTH-08", "state": "Uttar Pradesh", "district": "Fatehpur", "location_address": "Bypass Road, Near Collectorate, Fatehpur", "pincode": "212601", "latitude": 25.9279, "longitude": 80.8126, "daily_capacity": 80, "active_counters": 4, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "05180-223411", "status": "active"},
-    {"id": "CENTRE-09", "name": "Mathura APMC Mandi Hub", "code": "UP-MATH-09", "state": "Uttar Pradesh", "district": "Mathura", "location_address": "Highway Cut, NH-19, Mathura", "pincode": "281001", "latitude": 27.4924, "longitude": 77.6737, "daily_capacity": 70, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0565-2409812", "status": "active"},
-    {"id": "CENTRE-10", "name": "Ujjain Grain Procurement Complex", "code": "MP-UJJ-10", "state": "Madhya Pradesh", "district": "Ujjain", "location_address": "Agar Road, Chimanganj Mandi, Ujjain", "pincode": "456006", "latitude": 23.1765, "longitude": 75.7885, "daily_capacity": 85, "active_counters": 4, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0734-2551234", "status": "active"},
-    {"id": "CENTRE-11", "name": "Sri Ganganagar Krishi Mandi", "code": "RJ-GAN-11", "state": "Rajasthan", "district": "Sri Ganganagar", "location_address": "Grain Market Area, Sri Ganganagar", "pincode": "335001", "latitude": 29.9038, "longitude": 73.8772, "daily_capacity": 95, "active_counters": 5, "opening_time": "08:00", "closing_time": "18:00", "contact_phone": "0154-2476543", "status": "active"},
-    {"id": "CENTRE-12", "name": "Latur Pulses & Grain Market", "code": "MH-LUR-12", "state": "Maharashtra", "district": "Latur", "location_address": "Market Yard, MIDC Phase 2, Latur", "pincode": "413531", "latitude": 18.4088, "longitude": 76.5604, "daily_capacity": 75, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "02382-243210", "status": "active"},
-    {"id": "CENTRE-13", "name": "Rajkot APMC Market Yard", "code": "GJ-RAJK-13", "state": "Gujarat", "district": "Rajkot", "location_address": "Bedi Market Yard, Morbi Road, Rajkot", "pincode": "360003", "latitude": 22.3039, "longitude": 70.8022, "daily_capacity": 90, "active_counters": 4, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0281-2458901", "status": "active"},
-    {"id": "CENTRE-14", "name": "Patna Gulzarbagh Grain Hub", "code": "BR-PAT-14", "state": "Bihar", "district": "Patna", "location_address": "Gulzarbagh Mandi Complex, Patna", "pincode": "800007", "latitude": 25.6093, "longitude": 85.1865, "daily_capacity": 65, "active_counters": 3, "opening_time": "09:00", "closing_time": "17:00", "contact_phone": "0612-2634120", "status": "active"},
-    {"id": "CENTRE-15", "name": "Burdwan Paddy Procurement Center", "code": "WB-BUR-15", "state": "West Bengal", "district": "Purba Bardhaman", "location_address": "Nawabhat Market Complex, Bardhaman", "pincode": "713101", "latitude": 23.2324, "longitude": 87.8615, "daily_capacity": 70, "active_counters": 3, "opening_time": "08:30", "closing_time": "17:30", "contact_phone": "0342-2665432", "status": "active"}
+    {"id": "CENTRE-01", "name": "Karnal Central Anaj Mandi", "code": "HR-KAR-01", "state": "Haryana", "district": "Karnal", "location_address": "Sector 4, GT Road, Karnal", "pincode": "132001", "latitude": 29.6857, "longitude": 76.9905, "daily_capacity": 80, "active_counters": 4, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0184-2254321", "status": "active"},
+    {"id": "CENTRE-02", "name": "Ludhiana Grain Hub", "code": "PB-LDH-02", "state": "Punjab", "district": "Ludhiana", "location_address": "Grain Market Road, Gill Road, Ludhiana", "pincode": "141003", "latitude": 30.9010, "longitude": 75.8573, "daily_capacity": 100, "active_counters": 5, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0161-2401928", "status": "active"},
+    {"id": "CENTRE-03", "name": "Kota Agri Mandi Yard", "code": "RJ-KOT-03", "state": "Rajasthan", "district": "Kota", "location_address": "Anantpura Industrial Area, Kota", "pincode": "324005", "latitude": 25.1388, "longitude": 75.8340, "daily_capacity": 70, "active_counters": 3, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0744-2391024", "status": "active"},
+    {"id": "CENTRE-04", "name": "Indore Krishi Upaj Mandi", "code": "MP-IND-04", "state": "Madhya Pradesh", "district": "Indore", "location_address": "Laxmibai Nagar Mandi, Indore", "pincode": "452006", "latitude": 22.7533, "longitude": 75.8617, "daily_capacity": 90, "active_counters": 4, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0731-2539120", "status": "active"},
+    {"id": "CENTRE-05", "name": "Nizamabad APMC Market", "code": "TS-NZB-05", "state": "Telangana", "district": "Nizamabad", "location_address": "Market Yard, Bodhan Road, Nizamabad", "pincode": "503001", "latitude": 18.6725, "longitude": 78.0941, "daily_capacity": 65, "active_counters": 3, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "08462-234190", "status": "active"},
+    {"id": "CENTRE-06", "name": "Amritsar Grain Market", "code": "PB-AMR-06", "state": "Punjab", "district": "Amritsar", "location_address": "GT Road, Near Railway Station, Amritsar", "pincode": "143001", "latitude": 31.6340, "longitude": 74.8723, "daily_capacity": 85, "active_counters": 4, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0183-2210987", "status": "active"},
+    {"id": "CENTRE-07", "name": "Hisar Anaj Mandi Yard", "code": "HR-HIS-07", "state": "Haryana", "district": "Hisar", "location_address": "Delhi Road, Opp. Bus Stand, Hisar", "pincode": "125001", "latitude": 29.1492, "longitude": 75.7217, "daily_capacity": 75, "active_counters": 3, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "01662-234567", "status": "active"},
+    {"id": "CENTRE-08", "name": "Fatehpur Main Krishi Upaj Mandi", "code": "UP-FTH-08", "state": "Uttar Pradesh", "district": "Fatehpur", "location_address": "Bypass Road, Near Collectorate, Fatehpur", "pincode": "212601", "latitude": 25.9279, "longitude": 80.8126, "daily_capacity": 80, "active_counters": 4, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "05180-223411", "status": "active"},
+    {"id": "CENTRE-09", "name": "Mathura APMC Mandi Hub", "code": "UP-MATH-09", "state": "Uttar Pradesh", "district": "Mathura", "location_address": "Highway Cut, NH-19, Mathura", "pincode": "281001", "latitude": 27.4924, "longitude": 77.6737, "daily_capacity": 70, "active_counters": 3, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0565-2409812", "status": "active"},
+    {"id": "CENTRE-10", "name": "Ujjain Grain Procurement Complex", "code": "MP-UJJ-10", "state": "Madhya Pradesh", "district": "Ujjain", "location_address": "Agar Road, Chimanganj Mandi, Ujjain", "pincode": "456006", "latitude": 23.1765, "longitude": 75.7885, "daily_capacity": 85, "active_counters": 4, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0734-2551234", "status": "active"},
+    {"id": "CENTRE-11", "name": "Sri Ganganagar Krishi Mandi", "code": "RJ-GAN-11", "state": "Rajasthan", "district": "Sri Ganganagar", "location_address": "Grain Market Area, Sri Ganganagar", "pincode": "335001", "latitude": 29.9038, "longitude": 73.8772, "daily_capacity": 95, "active_counters": 5, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0154-2476543", "status": "active"},
+    {"id": "CENTRE-12", "name": "Latur Pulses & Grain Market", "code": "MH-LUR-12", "state": "Maharashtra", "district": "Latur", "location_address": "Market Yard, MIDC Phase 2, Latur", "pincode": "413531", "latitude": 18.4088, "longitude": 76.5604, "daily_capacity": 75, "active_counters": 3, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "02382-243210", "status": "active"},
+    {"id": "CENTRE-13", "name": "Rajkot APMC Market Yard", "code": "GJ-RAJK-13", "state": "Gujarat", "district": "Rajkot", "location_address": "Bedi Market Yard, Morbi Road, Rajkot", "pincode": "360003", "latitude": 22.3039, "longitude": 70.8022, "daily_capacity": 90, "active_counters": 4, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0281-2458901", "status": "active"},
+    {"id": "CENTRE-14", "name": "Patna Gulzarbagh Grain Hub", "code": "BR-PAT-14", "state": "Bihar", "district": "Patna", "location_address": "Gulzarbagh Mandi Complex, Patna", "pincode": "800007", "latitude": 25.6093, "longitude": 85.1865, "daily_capacity": 65, "active_counters": 3, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0612-2634120", "status": "active"},
+    {"id": "CENTRE-15", "name": "Burdwan Paddy Procurement Center", "code": "WB-BUR-15", "state": "West Bengal", "district": "Purba Bardhaman", "location_address": "Nawabhat Market Complex, Bardhaman", "pincode": "713101", "latitude": 23.2324, "longitude": 87.8615, "daily_capacity": 70, "active_counters": 3, "opening_time": "09:00 AM", "closing_time": "05:30 PM", "contact_phone": "0342-2665432", "status": "active"}
 ]
 
 
@@ -363,15 +363,43 @@ def mark_otp_session_used(phone: str):
         print(f"[SUPABASE OTP UPDATE ERROR] {e}")
 
 # ─── Farmers ────────────────────────────────────────────────────────────────
+def clean_phone(phone: str) -> str:
+    if not phone:
+        return ""
+    digits = "".join(c for c in str(phone) if c.isdigit())
+    if len(digits) >= 10:
+        return digits[-10:]
+    return digits
+
 def get_farmer_by_phone(phone: str):
+    if not phone:
+        return None
+    c_phone = clean_phone(phone)
+    # Check local store first
+    for key, farmer in list(_local_store["farmers"].items()):
+        if clean_phone(key) == c_phone or key == phone or farmer.get("phone") == phone:
+            return farmer
+
     try:
+        # Try exact query
         res = supabase_admin.table("farmers").select("*").eq("phone", phone).execute()
         if res.data and len(res.data) > 0:
             _local_store["farmers"][phone] = res.data[0]
             return res.data[0]
+        # Try clean phone
+        if c_phone and c_phone != phone:
+            res2 = supabase_admin.table("farmers").select("*").eq("phone", c_phone).execute()
+            if res2.data and len(res2.data) > 0:
+                _local_store["farmers"][c_phone] = res2.data[0]
+                return res2.data[0]
+            # Try +91 format
+            res3 = supabase_admin.table("farmers").select("*").eq("phone", f"+91{c_phone}").execute()
+            if res3.data and len(res3.data) > 0:
+                _local_store["farmers"][c_phone] = res3.data[0]
+                return res3.data[0]
     except Exception as e:
         print(f"[SUPABASE FARMER FETCH ERROR] {e}")
-    return _local_store["farmers"].get(phone)
+    return None
 
 def get_farmer_by_id(farmer_id: str):
     try:
@@ -415,12 +443,15 @@ def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
     centre = get_centre_by_id(centre_id)
     raw_daily_cap = centre.get("daily_capacity", 60) if isinstance(centre, dict) else 60
     daily_cap = raw_daily_cap if isinstance(raw_daily_cap, (int, float)) else 60
-    slot_cap = max(1, int(daily_cap) // 6)
 
     slot_labels = [
-        "08:30 – 09:30", "09:30 – 10:30", "10:30 – 11:30",
-        "12:00 – 13:00", "13:00 – 14:30", "14:30 – 16:00"
+        "09:00 AM – 10:30 AM",
+        "10:30 AM – 12:00 PM",
+        "12:00 PM – 01:30 PM",
+        "02:30 PM – 04:00 PM",
+        "04:00 PM – 05:30 PM"
     ]
+    slot_cap = max(1, int(daily_cap) // len(slot_labels))
 
     booked_counts = {}
     try:
@@ -446,14 +477,96 @@ def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
         for sl in slot_labels
     ]
 
-def get_booking_count_by_date(centre_id: str, booking_date: str) -> int:
+def fix_duplicate_tokens():
+    """Deduplicates any existing booking tokens so each booking has a unique sequence number."""
+    import re
+    all_bookings = list(_local_store["bookings"].values())
     try:
-        res = supabase_admin.table("slot_bookings").select("id", count="exact").eq("centre_id", centre_id).eq("booking_date", booking_date).neq("booking_status", "cancelled").execute()
-        if res.count is not None:
-            return res.count
+        res = supabase_admin.table("slot_bookings").select("*").order("created_at", desc=False).execute()
+        if res.data:
+            sb_dict = {b["id"]: b for b in res.data}
+            for b in all_bookings:
+                sb_dict[b["id"]] = b
+            all_bookings = list(sb_dict.values())
     except Exception:
         pass
-    return sum(1 for b in _local_store["bookings"].values() if b.get("centre_id") == centre_id and b.get("booking_date") == booking_date and b.get("booking_status") != "cancelled")
+
+    all_bookings.sort(key=lambda x: str(x.get("created_at", "")))
+    used_tokens = set()
+    seq = 1
+
+    for b in all_bookings:
+        tok = b.get("token_number")
+        if not tok or tok in used_tokens:
+            while f"DOCA-26-P{seq:03d}" in used_tokens:
+                seq += 1
+            new_tok = f"DOCA-26-P{seq:03d}"
+            b["token_number"] = new_tok
+            used_tokens.add(new_tok)
+            if b.get("id") and b["id"] in _local_store["bookings"]:
+                _local_store["bookings"][b["id"]]["token_number"] = new_tok
+            try:
+                supabase_admin.table("slot_bookings").update({"token_number": new_tok}).eq("id", b["id"]).execute()
+            except Exception:
+                pass
+        else:
+            used_tokens.add(tok)
+            m = re.search(r"P(\d+)", str(tok))
+            if m:
+                try:
+                    seq = max(seq, int(m.group(1)) + 1)
+                except ValueError:
+                    pass
+
+def get_next_token_number(centre_id: str = None, booking_date: str = None) -> str:
+    fix_duplicate_tokens()
+    import re
+    max_seq = 0
+    all_tokens = set()
+
+    # 1. Check local store
+    for b in _local_store["bookings"].values():
+        tok = b.get("token_number")
+        if tok:
+            all_tokens.add(str(tok))
+
+    # 2. Check Supabase
+    try:
+        res = supabase_admin.table("slot_bookings").select("token_number").execute()
+        if res.data:
+            for row in res.data:
+                tok = row.get("token_number")
+                if tok:
+                    all_tokens.add(str(tok))
+    except Exception as e:
+        print(f"[SUPABASE TOKEN FETCH NOTICE] {e}")
+
+    # 3. Extract max sequence number from token strings like DOCA-26-P001
+    for tok in all_tokens:
+        match = re.search(r"P(\d+)", str(tok))
+        if match:
+            try:
+                seq = int(match.group(1))
+                if seq > max_seq:
+                    max_seq = seq
+            except ValueError:
+                pass
+
+    next_seq = max_seq + 1
+    return f"DOCA-26-P{next_seq:03d}"
+
+def get_booking_count_by_date(centre_id: str, booking_date: str) -> int:
+    try:
+        res = supabase_admin.table("slot_bookings").select("id").eq("centre_id", centre_id).eq("booking_date", booking_date).neq("booking_status", "cancelled").execute()
+        if res.data is not None:
+            return len(res.data)
+    except Exception:
+        pass
+    count = 0
+    for b in _local_store["bookings"].values():
+        if b.get("centre_id") == centre_id and b.get("booking_date") == booking_date and b.get("booking_status") != "cancelled":
+            count += 1
+    return count
 
 def insert_booking(b: dict):
     _local_store["bookings"][b["id"]] = b
@@ -554,20 +667,27 @@ def get_farmer_bookings(phone: str = None, token: str = None):
         return flat
 
     if phone:
+        fix_duplicate_tokens()
         farmer = get_farmer_by_phone(phone)
         if not farmer:
             return []
 
-        bookings_list = []
+        supabase_bookings = []
         try:
             res = supabase_admin.table("slot_bookings").select("*").eq("farmer_id", farmer.get("id")).order("created_at", desc=True).execute()
             if res.data:
-                bookings_list = res.data
+                supabase_bookings = res.data
         except Exception:
             pass
 
-        if not bookings_list:
-            bookings_list = [b for b in _local_store["bookings"].values() if b.get("farmer_id") == farmer.get("id")]
+        # Combine with local store bookings to ensure all bookings are retrieved
+        booking_dict = {b["id"]: b for b in supabase_bookings}
+        for b in _local_store["bookings"].values():
+            if b.get("farmer_id") == farmer.get("id"):
+                booking_dict[b["id"]] = b
+
+        bookings_list = list(booking_dict.values())
+        bookings_list.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
 
         results = []
         for b in bookings_list:
