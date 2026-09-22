@@ -87,7 +87,7 @@
 <!-- ======================================================= -->
 <section class="landing-section">
   <div class="section-header">
-    <div class="section-tag" data-i18n="msp_tag">📊 Government Approved</div>
+    <!-- <div class="section-tag" data-i18n="msp_tag">📊 Government Approved</div> -->
     <h2 class="section-title" data-i18n="msp_title">2026-27 Minimum Support Prices (MSP)</h2>
     <p class="section-desc" data-i18n="msp_desc">Officially notified MSP rates for Kharif & Rabi crops as per Cabinet
       Committee on Economic Affairs (CCEA)</p>
@@ -96,7 +96,8 @@
   <div class="crop-prices-grid" id="crop-prices-grid">
     <!-- Populated by landing.js -->
     {% for crop in crops %}
-    <div class="crop-price-card">
+    <div class="crop-price-card {% if loop.index > 8 %}crop-card-hidden{% endif %}"
+         {% if loop.index > 8 %}style="display: none;"{% endif %}>
       <div class="crop-category-pill {{ crop.category }}">{{ crop.category }}</div>
       <div class="crop-price-name">{{ crop.crop_name }}</div>
       <div class="crop-price-hindi">{{ crop.hindi_name }}</div>
@@ -104,6 +105,13 @@
       <div class="crop-msp-label" data-i18n="per_quintal">per Quintal (100 kg)</div>
     </div>
     {% endfor %}
+  </div>
+
+  <div class="show-all-crops-wrap">
+    <button type="button" id="btn-toggle-crops" class="btn-show-all-crops" onclick="toggleShowAllCrops()">
+      <span id="lbl-toggle-crops-icon" class="toggle-arrow">↓</span>
+      <span id="lbl-toggle-crops-text" data-i18n="btn_show_all_crops">Show All</span>
+    </button>
   </div>
 </section>
 
@@ -158,39 +166,28 @@
 
       <div class="centres-list-panel" id="centres-list-panel">
         <div class="centres-list-header">
-          <span>🏢 Procurement Centres</span>
-          <span id="centres-count-badge"
-            style="background: #dcfce7; color: #15803d; padding: 0.15rem 0.5rem; border-radius: 0.4rem; font-size: 0.72rem; font-weight: 700;">{{
-            centres|length }} centres</span>
+          <span>Procurement Centres</span>
         </div>
         <div id="centres-list-container">
           {% for centre in centres %}
           <div class="centre-list-item"
             onclick="focusMapCentre('{{ centre.id }}', {{ centre.latitude }}, {{ centre.longitude }})"
             id="centre-list-{{ centre.id }}" role="button" tabindex="0">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+            <div class="centre-item-top">
               <div class="centre-item-name">{{ centre.name }}</div>
-              <span class="dist-badge" id="dist-badge-{{ centre.id }}"
-                style="display:none; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.4rem; background: #e0f2fe; color: #0369a1; border-radius: 0.3rem; white-space: nowrap;"></span>
+              <div class="centre-item-status-wrap">
+                <span class="dist-badge" id="dist-badge-{{ centre.id }}" style="display:none;"></span>
+                <span class="centre-queue-pill" id="wait-badge-{{ centre.id }}">🟢 Low Queue</span>
+              </div>
             </div>
             <div class="centre-item-address">📍 {{ centre.location_address }}</div>
-            <div class="centre-item-badges" style="margin-top: 0.4rem;">
-              <span class="centre-badge active">✓ {{ centre.status|title }}</span>
-              <span class="centre-badge capacity">{{ centre.daily_capacity }} slots/day</span>
-              <span class="centre-badge" style="background: #f3e8ff; color: #6b21a8;">{{ centre.active_counters }}
-                counters</span>
-              <span class="centre-badge wait-badge" id="wait-badge-{{ centre.id }}"
-                style="background: #dcfce7; color: #15803d;">🟢 Low Queue</span>
-            </div>
-            <div class="centre-item-actions" style="margin-top: 0.6rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
+            <div class="centre-item-actions">
               <a href="https://www.google.com/maps/dir/?api=1&destination={{ centre.latitude }},{{ centre.longitude }}"
-                target="_blank" class="btn-directions-gmaps" onclick="event.stopPropagation()"
-                style="background: #1e293b; color: #38bdf8; text-decoration: none; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;">
-                🗺️ Directions (Google Maps)
+                target="_blank" class="btn-directions-clean" onclick="event.stopPropagation()">
+                📍 Directions
               </a>
-              <a href="/farmer/login" class="btn-book-slot-mini" onclick="event.stopPropagation()"
-                style="background: #16a34a; color: #ffffff; text-decoration: none; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 0.35rem; display: inline-flex; align-items: center; gap: 0.3rem;">
-                🎫 Book Slot
+              <a href="/farmer/login" class="btn-book-clean" onclick="bookSlotForCentre('{{ centre.id }}', event)">
+                Book Slot →
               </a>
             </div>
           </div>
@@ -202,102 +199,41 @@
 </section>
 
 <!-- ======================================================= -->
-<!-- HOW IT WORKS                                             -->
+<!-- TRACK PROGRESS SECTION                                   -->
 <!-- ======================================================= -->
-<section class="landing-section alt" id="how-it-works">
-  <div class="section-header">
-    <div class="section-tag" data-i18n="how_tag">⚡ Simple 6-Step Process</div>
-    <h2 class="section-title" data-i18n="how_title">How SmartProcure Works</h2>
-    <p class="section-desc" data-i18n="how_desc">From registration to payment in 6 easy steps — no paperwork, no queues
-    </p>
-  </div>
-
-  <div class="how-it-works-grid">
-    <div class="step-card step-1">
-      <div class="step-top-header">
-        <span class="step-number-bubble">1</span>
-        <span class="step-badge" data-i18n="step1_badge">STEP 01 • MOBILE REGISTRATION</span>
-      </div>
-      <div class="step-icon-wrapper">
-        <span class="step-icon-lg">📱</span>
-      </div>
-      <h3 class="step-card-title" data-i18n="step1_title">1. Register via Mobile OTP</h3>
-      <p class="step-card-desc" data-i18n="step1_desc">Verify your mobile number with OTP, then enter your Aadhaar &
-        bank details once.</p>
-      <div class="step-chip" data-i18n="step1_chip">✨ One-Time Registration</div>
+<section class="landing-section" id="landing-track-section" style="border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; background: linear-gradient(180deg, #f8fafc 0%, #f0fdf4 100%);">
+  <div class="landing-container" style="max-width: 960px; margin: 0 auto; padding: 0 1rem;">
+    <div class="section-header" style="text-align: center; margin-bottom: 2.5rem;">
+      <div class="section-tag" data-i18n="track_tag">📍 LIVE QUEUE STATUS</div>
+      <h2 class="section-title" data-i18n="track_title">Track Procurement & Queue Progress</h2>
+      <p class="section-desc" data-i18n="track_desc">Enter your Token Number (e.g. DOCA-26-P001) to check real-time status and live wait time without logging in.</p>
     </div>
 
-    <div class="step-card step-2">
-      <div class="step-top-header">
-        <span class="step-number-bubble">2</span>
-        <span class="step-badge" data-i18n="step2_badge">STEP 02 • SLOT BOOKING</span>
+    <div class="landing-track-card" style="background: white; border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; padding: 2rem 1.5rem; transition: all 0.3s ease;">
+      <!-- Search Input Box -->
+      <div class="landing-track-search-box" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: flex-end;">
+        <div style="flex: 1; min-width: 260px;">
+          <label class="form-label" style="display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.4rem;" data-i18n="track_input_label">Token Number</label>
+          <input type="text" id="landing-track-input" class="form-control" placeholder="e.g. DOCA-26-P001" data-i18n-placeholder="track_input_placeholder" style="width: 100%; padding: 0.8rem 1rem; border-radius: 0.75rem; border: 1.5px solid #cbd5e1; font-size: 1rem; font-weight: 600; outline: none; transition: border-color 0.2s;" onkeypress="if(event.key==='Enter') trackLandingToken()">
+        </div>
+        <button class="btn btn-primary" id="landing-track-btn" onclick="trackLandingToken()" style="padding: 0.8rem 1.5rem; font-weight: 700; border-radius: 0.75rem; background: linear-gradient(135deg, #16a34a, #15803d); border: none; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; height: 46px;">
+          <span data-i18n="track_btn_search">🔍 Track Progress</span>
+        </button>
       </div>
-      <div class="step-icon-wrapper">
-        <span class="step-icon-lg">🎟️</span>
-      </div>
-      <h3 class="step-card-title" data-i18n="step2_title">2. Book a Guaranteed Slot</h3>
-      <p class="step-card-desc" data-i18n="step2_desc">Select your nearest Mandi, crop type, preferred date & time — get
-        a digital token instantly.</p>
-      <div class="step-chip" data-i18n="step2_chip">🎟️ Instant Digital Pass</div>
-    </div>
 
-    <div class="step-card step-3">
-      <div class="step-top-header">
-        <span class="step-number-bubble">3</span>
-        <span class="step-badge" data-i18n="step3_badge">STEP 03 • MANDI ARRIVAL</span>
+      <!-- Result Container -->
+      <div id="landing-track-result">
+        <div class="empty-state" style="text-align: center; padding: 2.5rem 1rem; background: #f8fafc; border-radius: 1rem; border: 1px dashed #cbd5e1;">
+          <span class="empty-state-icon" style="font-size: 2.5rem; display: block; margin-bottom: 0.75rem;">🎫</span>
+          <div class="empty-state-title" style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.4rem;" data-i18n="track_empty_title">Check Your Mandi Queue Status Live</div>
+          <div class="empty-state-desc" style="font-size: 0.9rem; color: #64748b; max-width: 480px; margin: 0 auto;" data-i18n="track_empty_desc">Enter your digital token number above to see real-time progress through all stages.</div>
+        </div>
       </div>
-      <div class="step-icon-wrapper">
-        <span class="step-icon-lg">🚚</span>
-      </div>
-      <h3 class="step-card-title" data-i18n="step3_title">3. Arrive & Quick Check-In</h3>
-      <p class="step-card-desc" data-i18n="step3_desc">Arrive at your booked time and check-in via phone. Skip the
-        physical line entirely.</p>
-      <div class="step-chip" data-i18n="step3_chip">🚫 Zero Physical Waiting</div>
-    </div>
-
-    <div class="step-card step-4">
-      <div class="step-top-header">
-        <span class="step-number-bubble">4</span>
-        <span class="step-badge" data-i18n="step4_badge">STEP 04 • LIVE QUEUE</span>
-      </div>
-      <div class="step-icon-wrapper">
-        <span class="step-icon-lg">📶</span>
-      </div>
-      <h3 class="step-card-title" data-i18n="step4_title">4. Track Live Queue Line</h3>
-      <p class="step-card-desc" data-i18n="step4_desc">Watch real-time token position and estimated wait time from your
-        phone or tractor.</p>
-      <div class="step-chip" data-i18n="step4_chip">📱 Live Phone Alerts</div>
-    </div>
-
-    <div class="step-card step-5">
-      <div class="step-top-header">
-        <span class="step-number-bubble">5</span>
-        <span class="step-badge" data-i18n="step5_badge">STEP 05 • WEIGHMENT & QUALITY</span>
-      </div>
-      <div class="step-icon-wrapper">
-        <span class="step-icon-lg">⚖️</span>
-      </div>
-      <h3 class="step-card-title" data-i18n="step5_title">5. Digital Weighbridge & Quality Check</h3>
-      <p class="step-card-desc" data-i18n="step5_desc">Computerized transparent weighment & certified grading receipt
-        created on the spot.</p>
-      <div class="step-chip" data-i18n="step5_chip">⚖️ 100% Accurate Scale</div>
-    </div>
-
-    <div class="step-card step-6">
-      <div class="step-top-header">
-        <span class="step-number-bubble">6</span>
-        <span class="step-badge" data-i18n="step6_badge">STEP 06 • DIRECT BANK PAYMENT</span>
-      </div>
-      <div class="step-icon-wrapper">
-        <span class="step-icon-lg">💰</span>
-      </div>
-      <h3 class="step-card-title" data-i18n="step6_title">6. Direct Bank Transfer (DBT)</h3>
-      <p class="step-card-desc" data-i18n="step6_desc">Full MSP payment credited directly to your bank account via PFMS
-        — zero middlemen or fees.</p>
-      <div class="step-chip" data-i18n="step6_chip">💰 100% Money to Bank Account</div>
     </div>
   </div>
 </section>
+
+
 
 <!-- ======================================================= -->
 <!-- CTA BOTTOM BANNER                                        -->
@@ -317,6 +253,9 @@
 </section>
 
 {% endblock %}
+
+{% block sms_button %}{% endblock %}
+
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

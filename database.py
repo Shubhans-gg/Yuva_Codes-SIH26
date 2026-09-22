@@ -453,6 +453,9 @@ def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
     ]
     slot_cap = max(1, int(daily_cap) // len(slot_labels))
 
+    today_str = datetime.date.today().isoformat()
+    now_time = datetime.datetime.now().time()
+
     booked_counts = {}
     try:
         res = supabase_admin.table("slot_bookings").select("time_slot").eq("centre_id", centre_id).eq("booking_date", booking_date).neq("booking_status", "cancelled").execute()
@@ -467,15 +470,34 @@ def get_slots_for_date_and_centre(centre_id: str, booking_date: str):
                 sl = b.get("time_slot")
                 booked_counts[sl] = booked_counts.get(sl, 0) + 1
 
-    return [
-        {
+    slots_result = []
+    for sl in slot_labels:
+        is_past = False
+        if booking_date < today_str:
+            is_past = True
+        elif booking_date == today_str:
+            parts = sl.split("–") if "–" in sl else sl.split("-")
+            if len(parts) >= 2:
+                end_str = parts[1].strip()
+                try:
+                    end_time = datetime.datetime.strptime(end_str, "%I:%M %p").time()
+                    if now_time >= end_time:
+                        is_past = True
+                except ValueError:
+                    pass
+
+        booked = booked_counts.get(sl, 0)
+        available = 0 if is_past else max(0, slot_cap - booked)
+
+        slots_result.append({
             "slot_label": sl,
             "capacity": slot_cap,
-            "booked": booked_counts.get(sl, 0),
-            "available": max(0, slot_cap - booked_counts.get(sl, 0))
-        }
-        for sl in slot_labels
-    ]
+            "booked": booked,
+            "available": available,
+            "is_past": is_past
+        })
+
+    return slots_result
 
 def fix_duplicate_tokens():
     """Deduplicates any existing booking tokens so each booking has a unique sequence number."""
@@ -586,6 +608,41 @@ def update_booking_check_in(booking_id: str, check_in_time: str):
         }).eq("id", booking_id).execute()
     except Exception as e:
         print(f"[SUPABASE CHECK-IN NOTICE] {e}")
+
+def cancel_farmer_booking(booking_id: str, farmer_phone: str = None):
+    """
+    Allows a farmer to cancel/delete their booking BEFORE check-in (status == 'booked').
+    Returns (success: bool, message: str).
+    """
+    booking = get_booking_by_id_or_token(booking_id)
+    if not booking:
+        return False, "Booking not found"
+
+    status = (booking.get("booking_status") or "").lower()
+    if status != "booked":
+        if status in ("checked_in", "called", "completed"):
+            return False, f"Cannot delete or cancel booking after check-in at Mandi (current status: {status.replace('_', ' ').title()})"
+        elif status == "cancelled":
+            return False, "This booking has already been cancelled"
+        else:
+            return False, f"Cannot cancel booking with status '{status}'"
+
+    if farmer_phone and booking.get("farmer_phone"):
+        if str(booking.get("farmer_phone")).strip() != str(farmer_phone).strip():
+            return False, "Unauthorized: Booking belongs to another account"
+
+    actual_id = booking.get("id")
+    if actual_id in _local_store["bookings"]:
+        _local_store["bookings"][actual_id]["booking_status"] = "cancelled"
+
+    try:
+        supabase_admin.table("slot_bookings").update({
+            "booking_status": "cancelled"
+        }).eq("id", actual_id).execute()
+    except Exception as e:
+        print(f"[SUPABASE CANCEL BOOKING NOTICE] {e}")
+
+    return True, f"Booking token {booking.get('token_number', '')} cancelled successfully"
 
 def get_booking_by_id_or_token(query_val: str):
     raw_b = None
@@ -914,16 +971,22 @@ def log_sms(sms_record: dict):
         print(f"[SUPABASE SMS LOG NOTICE] {e}")
 
 def get_sms_logs(phone: str = None, limit: int = 50):
+    if not phone or not str(phone).strip():
+        return []
+    phone = str(phone).strip()
+    c_phone = phone.replace("+91", "").strip()
     try:
-        q = supabase_admin.table("sms_audit_logs").select("*").order("sent_at", desc=True).limit(limit)
-        if phone:
-            q = q.eq("phone", phone)
-        res = q.execute()
+        res = supabase_admin.table("sms_audit_logs").select("*").or_(
+            f"phone.eq.{phone},phone.eq.{c_phone},phone.eq.+91{c_phone}"
+        ).order("sent_at", desc=True).limit(limit).execute()
         if res.data:
             return res.data
     except Exception:
         pass
-    return []
+
+    logs = [s for s in _local_store.get("sms_logs", []) if str(s.get("phone", "")).replace("+91", "").strip() == c_phone]
+    logs.sort(key=lambda x: str(x.get("sent_at", "")), reverse=True)
+    return logs[:limit]
 
 # ─── Analytics Summary ──────────────────────────────────────────────────────
 def get_analytic_summary():

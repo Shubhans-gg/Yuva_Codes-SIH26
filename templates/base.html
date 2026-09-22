@@ -82,38 +82,11 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Mobile-First Sticky Bottom Navigation Bar (Visible on mobile screens) -->
-  <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Quick Access Mobile Navigation">
-    <a href="/" class="mobile-nav-item {% if request.path == '/' %}active{% endif %}" id="mob-nav-home">
-      <span class="mob-nav-icon">🏠</span>
-      <span class="mob-nav-label" data-i18n="mob_nav_home">Home</span>
-    </a>
-    <a href="/farmer/dashboard" class="mobile-nav-item {% if request.path == '/farmer/dashboard' %}active{% endif %}"
-      id="mob-nav-book">
-      <span class="mob-nav-icon">🎫</span>
-      <span class="mob-nav-label" data-i18n="mob_nav_book">Book Slot</span>
-    </a>
-    <button type="button" class="mobile-nav-item" id="mob-nav-sms" onclick="SMSDrawer.open()"
-      aria-label="Open SMS alerts">
-      <span class="mob-nav-icon">
-        💬
-        <span id="sms-badge-count-mob" class="sms-badge-count-mob" style="display: none;">0</span>
-      </span>
-      <span class="mob-nav-label" data-i18n="mob_nav_sms">SMS Alerts</span>
-    </button>
-
-    <button type="button" class="mobile-nav-item" id="mob-nav-lang" onclick="toggleLanguage()"
-      aria-label="Change Language">
-      <span class="mob-nav-icon">🌐</span>
-      <span class="mob-nav-label" id="mob-lang-label">हिंदी</span>
-    </button>
-  </nav>
-
   <!-- Floating SMS Inbox Button (Desktop & Tablet) -->
   {% block sms_button %}
   <button id="floating-sms-btn" class="floating-sms-btn" title="Open Official SMS Notifications"
-    aria-label="Open SMS Notifications">
-    💬 <span>Farmer SMS Inbox</span>
+    aria-label="Open SMS Notifications" style="display: none;">
+    💬 <span class="sms-btn-label">Farmer SMS Inbox</span>
     <span id="sms-badge-count" class="sms-badge-count" style="display: none;">0</span>
   </button>
 

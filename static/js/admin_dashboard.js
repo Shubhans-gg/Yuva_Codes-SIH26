@@ -80,7 +80,7 @@ async function loadAnalytics() {
     if (el('stat-total-bookings')) el('stat-total-bookings').textContent = m.total_slot_bookings.toLocaleString('en-IN');
     if (el('stat-total-quintals')) el('stat-total-quintals').textContent = m.total_procured_quintals.toLocaleString('en-IN') + ' Qtl';
     if (el('stat-total-payout')) el('stat-total-payout').textContent = '₹' + (m.total_payout_disbursed_inr / 100000).toFixed(2) + 'L';
-  } catch(e) { console.warn('Analytics load error', e); }
+  } catch (e) { console.warn('Analytics load error', e); }
 }
 
 function reloadAdminData() {
@@ -111,7 +111,7 @@ async function loadAdminQueue() {
     const count = (queue || []).length;
     if (badge) badge.textContent = count;
     if (tabBadge) tabBadge.textContent = count;
-  } catch(e) { console.warn('Queue load error', e); }
+  } catch (e) { console.warn('Queue load error', e); }
 }
 
 async function loadFullQueue() {
@@ -121,7 +121,7 @@ async function loadFullQueue() {
     const data = await res.json();
     if (!data.success) return;
     renderFullQueueTable('full-queue-tbody', data.data.queue || []);
-  } catch(e) { console.warn('Full queue load error', e); }
+  } catch (e) { console.warn('Full queue load error', e); }
 }
 
 function renderDesks(desks) {
@@ -139,7 +139,7 @@ function renderDesks(desks) {
         <span class="desk-number">Counter ${d.desk_number}</span>
         <span class="desk-status-dot ${d.status === 'active' ? 'active' : ''}"></span>
       </div>
-      <div class="desk-name">${d.desk_name.split('-').slice(0,2).join('-').trim()}</div>
+      <div class="desk-name">${d.desk_name.split('-').slice(0, 2).join('-').trim()}</div>
       <div class="desk-officer">${d.operator_name.split('(')[0].trim()}</div>
       ${d.current_token ? `
         <div class="desk-current-token">
@@ -159,7 +159,7 @@ function renderQueueTable(tbodyId, queue) {
     return;
   }
   tbody.innerHTML = queue.map((b, idx) => {
-    const statusColors = { booked:'#dbeafe', checked_in:'#fef9c3', called:'#fed7aa', completed:'#dcfce7', cancelled:'#fee2e2' };
+    const statusColors = { booked: '#dbeafe', checked_in: '#fef9c3', called: '#fed7aa', completed: '#dcfce7', cancelled: '#fee2e2' };
     const statusColor = statusColors[b.booking_status] || '#f1f5f9';
     return `
       <tr>
@@ -170,9 +170,9 @@ function renderQueueTable(tbodyId, queue) {
         </td>
         <td style="font-size:0.85rem;">${b.crop_name || '--'}</td>
         <td style="font-size:0.82rem;">${b.time_slot || '--'}</td>
-        <td><span style="background:${statusColor};color:#0f172a;font-size:0.7rem;font-weight:700;padding:0.2rem 0.5rem;border-radius:0.3rem;text-transform:uppercase;">${(b.booking_status||'').replace('_',' ')}</span></td>
+        <td><span style="background:${statusColor};color:#0f172a;font-size:0.7rem;font-weight:700;padding:0.2rem 0.5rem;border-radius:0.3rem;text-transform:uppercase;">${(b.booking_status || '').replace('_', ' ')}</span></td>
         <td style="font-size:0.82rem;">
-          ${b.desk_name ? `<span style="color:#d97706;font-weight:600;">${b.desk_name}</span>` : (b.booking_status === 'checked_in' ? `#${idx+1} in line` : '--')}
+          ${b.desk_name ? `<span style="color:#d97706;font-weight:600;">${b.desk_name}</span>` : (b.booking_status === 'checked_in' ? `#${idx + 1} in line` : '--')}
         </td>
         <td>
           <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
@@ -202,8 +202,8 @@ function renderFullQueueTable(tbodyId, queue) {
       <td>${b.crop_name || '--'}</td>
       <td>${b.estimated_quantity_quintals || '--'} Qtl</td>
       <td>${b.time_slot || '--'}</td>
-      <td><span class="booking-status-pill status-${b.booking_status}">${(b.booking_status||'').replace('_',' ')}</span></td>
-      <td style="font-size:0.8rem;">${b.check_in_time ? new Date(b.check_in_time).toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) : '--'}</td>
+      <td><span class="booking-status-pill status-${b.booking_status}">${(b.booking_status || '').replace('_', ' ')}</span></td>
+      <td style="font-size:0.8rem;">${b.check_in_time ? new Date(b.check_in_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '--'}</td>
       <td>
         <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
           ${b.booking_status === 'checked_in' ? `<button class="btn btn-primary btn-sm" onclick="callTokenToDesk('${b.token_number}')">📢 Call</button>` : ''}
@@ -220,7 +220,7 @@ async function callNextToken() {
   try {
     const res = await fetch('/api/admin/call-next', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ centre_id: centreId, desk_id: 'DESK-01' })
     });
     const data = await res.json();
@@ -230,7 +230,7 @@ async function callNextToken() {
     } else {
       showToast(data.error || 'No farmers in queue', 'error');
     }
-  } catch(e) { showToast('Error calling next token', 'error'); }
+  } catch (e) { showToast('Error calling next token', 'error'); }
 }
 
 async function callTokenToDesk(token) {
@@ -238,7 +238,7 @@ async function callTokenToDesk(token) {
   try {
     const res = await fetch('/api/admin/call-next', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ centre_id: centreId, desk_id: 'DESK-01', token_number: token })
     });
     const data = await res.json();
@@ -248,7 +248,7 @@ async function callTokenToDesk(token) {
     } else {
       showToast(data.error, 'error');
     }
-  } catch(e) { showToast('Error', 'error'); }
+  } catch (e) { showToast('Error', 'error'); }
 }
 
 async function callSpecificDesk(deskId) {
@@ -256,13 +256,13 @@ async function callSpecificDesk(deskId) {
   try {
     const res = await fetch('/api/admin/call-next', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ centre_id: centreId, desk_id: deskId })
     });
     const data = await res.json();
     if (data.success) { showToast('📢 ' + data.message, 'success'); loadAdminQueue(); }
     else { showToast(data.error, 'error'); }
-  } catch(e) { showToast('Error', 'error'); }
+  } catch (e) { showToast('Error', 'error'); }
 }
 
 // ─── Weighbridge ────────────────────────────────────
@@ -299,7 +299,7 @@ async function loadTokenForWeighment() {
       `;
     }
     updateScaleDisplay();
-  } catch(e) { showToast('Error loading token', 'error'); }
+  } catch (e) { showToast('Error loading token', 'error'); }
 }
 
 function updateScaleDisplay() {
@@ -329,7 +329,7 @@ async function recordProcurement(e) {
   try {
     const res = await fetch('/api/procurement/record', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         token_number: token, gross_weight_kg: gross, tare_weight_kg: tare,
         moisture_percentage: moisture, quality_grade: grade, operator_notes: notes,
@@ -344,7 +344,7 @@ async function recordProcurement(e) {
     } else {
       showToast(data.error, 'error');
     }
-  } catch(ex) { showToast('Error recording procurement', 'error'); }
+  } catch (ex) { showToast('Error recording procurement', 'error'); }
   btn.disabled = false; btn.textContent = '⚖️ Record Procurement & Issue Digital J-Form Receipt';
 }
 
@@ -369,7 +369,7 @@ async function lookupStatusToken() {
           <div style="font-weight:800;font-size:0.9rem;">${b.token_number}</div>
           <div style="font-size:0.8rem;color:#64748b;">👤 ${b.farmer_name} &nbsp;|&nbsp; 🌾 ${b.crop_name} &nbsp;|&nbsp; 📅 ${b.booking_date}</div>
         </div>
-        <span class="booking-status-pill status-${b.booking_status}">${(b.booking_status||'').replace('_',' ').toUpperCase()}</span>
+        <span class="booking-status-pill status-${b.booking_status}">${(b.booking_status || '').replace('_', ' ').toUpperCase()}</span>
       </div>
     `;
 
@@ -380,7 +380,7 @@ async function lookupStatusToken() {
     document.querySelectorAll('.status-step-btn').forEach(btn => btn.classList.remove('selected'));
     const curBtn = document.querySelector(`[data-status="${b.booking_status}"]`);
     if (curBtn) curBtn.classList.add('selected');
-  } catch(e) { showToast('Error looking up token', 'error'); }
+  } catch (e) { showToast('Error looking up token', 'error'); }
 }
 
 function selectStatus(status) {
@@ -401,7 +401,7 @@ async function applyStatusUpdate() {
       const data = await res.json();
       if (data.success) { showToast('✅ Status updated: Checked In', 'success'); loadAdminQueue(); }
       else showToast(data.error, 'error');
-    } catch(e) { showToast('Error', 'error'); }
+    } catch (e) { showToast('Error', 'error'); }
     return;
   }
 
@@ -411,7 +411,7 @@ async function applyStatusUpdate() {
     return;
   }
 
-  showToast(`Status "${selectedNewStatus.replace('_',' ')}" selected. Use Weighbridge to complete procurement.`, 'info');
+  showToast(`Status "${selectedNewStatus.replace('_', ' ')}" selected. Use Weighbridge to complete procurement.`, 'info');
 }
 
 // ─── Completed Procurements & DBT ───────────────────
@@ -441,27 +441,27 @@ async function loadCompletedProcurements() {
           </td>
           <td>${b.crop_name || '--'}</td>
           <td>${b.net_weight_quintals ? b.net_weight_quintals + ' Qtl' : '--'}</td>
-          <td style="font-weight:700;color:#0f172a;">${b.total_payable_amount ? '₹'+b.total_payable_amount.toLocaleString('en-IN') : '--'}</td>
+          <td style="font-weight:700;color:#0f172a;">${b.total_payable_amount ? '₹' + b.total_payable_amount.toLocaleString('en-IN') : '--'}</td>
           <td>
             ${isPaid
-              ? `<span style="background:#dcfce7;color:#15803d;font-size:0.72rem;font-weight:700;padding:0.25rem 0.6rem;border-radius:0.4rem;">✅ CREDITED</span>`
-              : b.receipt_number
-                ? `<button class="btn btn-primary btn-sm" onclick="processDBTPayout('${b.receipt_number}')">💸 Process DBT</button>`
-                : `<span style="color:#94a3b8;font-size:0.8rem;">Awaiting weighment</span>`
-            }
+          ? `<span style="background:#dcfce7;color:#15803d;font-size:0.72rem;font-weight:700;padding:0.25rem 0.6rem;border-radius:0.4rem;">✅ CREDITED</span>`
+          : b.receipt_number
+            ? `<button class="btn btn-primary btn-sm" onclick="processDBTPayout('${b.receipt_number}')">💸 Process DBT</button>`
+            : `<span style="color:#94a3b8;font-size:0.8rem;">Awaiting weighment</span>`
+        }
             ${b.receipt_number ? `<a href="/receipt/${b.receipt_number}" target="_blank" class="btn btn-secondary btn-sm" style="margin-left:0.35rem;">📄</a>` : ''}
           </td>
         </tr>
       `;
     }).join('');
-  } catch(e) { console.warn('Completed procurements error', e); }
+  } catch (e) { console.warn('Completed procurements error', e); }
 }
 
 async function processDBTPayout(receiptNumber) {
   try {
     const res = await fetch('/api/procurement/payout', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ receipt_number: receiptNumber })
     });
     const data = await res.json();
@@ -472,7 +472,7 @@ async function processDBTPayout(receiptNumber) {
     } else {
       showToast(data.error, 'error');
     }
-  } catch(e) { showToast('DBT processing error', 'error'); }
+  } catch (e) { showToast('DBT processing error', 'error'); }
 }
 
 // ─── Analytics Charts ───────────────────────────────
@@ -500,7 +500,7 @@ async function loadAnalyticsCharts() {
         </div>
       `).join('');
     }
-  } catch(e) { console.warn('Analytics charts error', e); }
+  } catch (e) { console.warn('Analytics charts error', e); }
 }
 
 // ─── Real-time Updates (Supabase Realtime) ──────────
@@ -529,7 +529,7 @@ function initSSE() {
         .subscribe((status) => {
           console.log('[Supabase Realtime] Channel status:', status);
         });
-    } catch(e) {
+    } catch (e) {
       console.warn('Supabase Realtime init error:', e);
     }
   }

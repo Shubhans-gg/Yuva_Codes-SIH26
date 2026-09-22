@@ -113,6 +113,8 @@ a:hover {
   height: 4px;
   background: linear-gradient(90deg, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%, #138808 100%);
   width: 100%;
+  position: relative;
+  z-index: 100000;
 }
 
 /* Network Status Alert Banner */
@@ -128,7 +130,7 @@ a:hover {
   gap: 0.5rem;
   position: sticky;
   top: 0;
-  z-index: 1001;
+  z-index: 100001;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   text-align: center;
   transition: all 0.3s ease;
@@ -150,7 +152,7 @@ a:hover {
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 99999 !important;
   box-shadow: var(--shadow-sm);
 }
 
@@ -276,9 +278,10 @@ a:hover {
   border-radius: var(--radius-md);
   font-size: 0.85rem;
   font-weight: 800;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.45rem;
   background: linear-gradient(135deg, #dc2626, #b91c1c);
   color: white !important;
   border: 1px solid #ef4444;
@@ -294,6 +297,18 @@ a:hover {
   transform: translateY(-1px);
 }
 
+.logout-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.btn-nav-logout:hover .logout-icon,
+.btn:hover .logout-icon {
+  transform: translateX(-3px);
+}
+
 
 /* Mobile Bottom Navigation Bar */
 .mobile-bottom-nav {
@@ -302,9 +317,9 @@ a:hover {
 
 @media (max-width: 768px) {
 
-  /* Prevent content being covered by bottom nav */
+  /* No padding bottom needed as mobile bottom navbar is removed */
   body {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
 
   /* Compact top header on mobile */
@@ -314,20 +329,26 @@ a:hover {
 
   .nav-container {
     padding: 0.5rem 0.85rem;
+    gap: 0.5rem;
   }
 
   .brand-text p.gov-sub-label {
     display: none;
-    /* Hide long sub-label on mobile screens */
   }
 
   .sih-badge {
     display: none;
   }
 
-  /* Hide desktop navigation links on mobile */
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
   .nav-actions .btn-nav-link {
-    display: none;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.78rem;
   }
 
   .lang-btn {
@@ -335,85 +356,8 @@ a:hover {
     font-size: 0.78rem;
   }
 
-  /* Sticky Mobile Bottom Navigation Bar */
   .mobile-bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: calc(58px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: #ffffff;
-    border-top: 2px solid #e2e8f0;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
-    z-index: 998;
-    justify-content: space-around;
-    align-items: center;
-  }
-
-  .mobile-nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.2rem;
-    text-decoration: none;
-    color: #64748b;
-    font-size: 0.68rem;
-    font-weight: 700;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.35rem 0;
-    position: relative;
-    height: 100%;
-    transition: all 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .mobile-nav-item:active {
-    background: #f0fdf4;
-    transform: scale(0.96);
-  }
-
-  .mobile-nav-item.active {
-    color: #15803d;
-  }
-
-  .mobile-nav-item.active::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 20%;
-    right: 20%;
-    height: 3px;
-    background: #16a34a;
-    border-radius: 0 0 3px 3px;
-  }
-
-  .mob-nav-icon {
-    font-size: 1.25rem;
-    line-height: 1;
-    position: relative;
-    display: inline-block;
-  }
-
-  .sms-badge-count-mob {
-    position: absolute;
-    top: -4px;
-    right: -8px;
-    background: #ef4444;
-    color: white;
-    font-size: 0.6rem;
-    font-weight: 900;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: none !important;
   }
 }
 
@@ -440,10 +384,37 @@ a:hover {
 }
 
 @media (max-width: 768px) {
-
-  /* On mobile, SMS button is inside the bottom navigation bar */
+  /* On mobile dashboard view, show inbox as a small floating icon in the bottom right corner */
   .floating-sms-btn {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+    z-index: 999;
+    font-size: 1.35rem;
+  }
+
+  .floating-sms-btn .sms-btn-label {
     display: none !important;
+  }
+
+  .floating-sms-btn .sms-badge-count {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 20px;
+    height: 20px;
+    font-size: 0.65rem;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -782,9 +753,9 @@ a:hover {
 /* Toast Notifications */
 #toast-container {
   position: fixed;
-  top: 1.5rem;
+  top: 5.5rem;
   right: 1.5rem;
-  z-index: 2000;
+  z-index: 1000001 !important;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -794,7 +765,7 @@ a:hover {
 .toast {
   background: white;
   border-left: 4px solid var(--primary-600);
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
   border-radius: var(--radius-md);
   padding: 0.9rem 1.25rem;
   display: flex;
@@ -803,12 +774,15 @@ a:hover {
   min-width: 300px;
   max-width: 420px;
   pointer-events: auto;
-  animation: slideInRight 0.3s ease;
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 @media (max-width: 768px) {
   #toast-container {
-    top: 0.75rem;
+    top: 5rem;
     left: 0.75rem;
     right: 0.75rem;
     align-items: center;

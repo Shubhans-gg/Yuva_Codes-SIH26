@@ -11,13 +11,13 @@ from sms import send_sms
 from database import (
     init_db, get_all_centres, get_centre_by_id, get_all_crops,
     get_slots_for_date_and_centre, get_live_queue_for_centre, get_farmer_by_phone,
-    get_farmer_by_id, save_farmer, get_booking_count_by_date, insert_booking,
+    get_farmer_by_id, save_farmer, get_booking_count_by_date, get_next_token_number, insert_booking,
     update_booking_check_in, get_booking_by_id_or_token, get_booking_by_token,
     get_desk_by_id, assign_desk_token, insert_procurement_record, create_payment_txn,
     get_procurement_by_receipt, update_payment_credited, get_farmer_bookings,
     get_admin_by_username, upsert_otp_session, get_otp_session, mark_otp_session_used,
     get_sms_logs as db_get_sms_logs, get_analytic_summary, get_nearest_centres,
-    verify_supabase_token
+    verify_supabase_token, cancel_farmer_booking
 )
 
 
@@ -35,10 +35,33 @@ except Exception as e:
 # WEB PAGES / TEMPLATE ROUTES
 # =============================================================================
 
+def sort_crops_featured_first(crops_list):
+    def rank(c):
+        name = (c.get('crop_name') or '').lower()
+        cid = c.get('id', '')
+        if 'wheat' in name or cid == 'CROP-01':
+            return 0
+        if ('paddy' in name or 'rice' in name) and ('common' in name or 'grade' not in name) or cid == 'CROP-04':
+            return 1
+        if ('paddy' in name or 'rice' in name) and 'grade' in name or cid == 'CROP-05':
+            return 2
+        if 'gram' in name or 'chana' in name or cid == 'CROP-02':
+            return 3
+        if 'arhar' in name or 'tur' in name or cid == 'CROP-11':
+            return 4
+        if 'moong' in name or cid == 'CROP-12':
+            return 5
+        if 'urad' in name or cid == 'CROP-13':
+            return 6
+        if 'bajra' in name or cid == 'CROP-08':
+            return 7
+        return 10
+    return sorted(crops_list, key=lambda c: (rank(c), c.get('crop_name', '')))
+
 @app.route('/')
 def landing_page():
     centres = get_all_centres()
-    crops = get_all_crops()
+    crops = sort_crops_featured_first(get_all_crops())
     return render_template('landing.html', config=Config, centres=centres, crops=crops)
 
 @app.route('/farmer/login')
@@ -396,6 +419,20 @@ def create_booking():
     if not farmer or not centre or not crop:
         return jsonify({"success": False, "error": "Farmer, Centre or Crop record not found"}), 404
 
+    today_str = datetime.date.today().isoformat()
+    if booking_date < today_str:
+        return jsonify({"success": False, "error": "Cannot book slots for a past date"}), 400
+
+    if booking_date == today_str and time_slot:
+        parts = time_slot.split('–') if '–' in time_slot else time_slot.split('-')
+        if len(parts) >= 2:
+            end_str = parts[1].strip()
+            try:
+                end_time = datetime.datetime.strptime(end_str, "%I:%M %p").time()
+                if datetime.datetime.now().time() >= end_time:
+                    return jsonify({"success": False, "error": "This time slot has already passed for today"}), 400
+            except ValueError:
+                pass
 
     token_number = get_next_token_number(centre_id, booking_date)
     booking_id = f"BOOK-{uuid.uuid4().hex[:8].upper()}"
@@ -478,6 +515,19 @@ def farmer_check_in(booking_id):
         "token_number": booking['token_number'],
         "sms_sent": sms_res
     })
+
+
+# 5b. Farmer Booking Cancellation / Deletion (Before Check-In Only)
+@app.route('/api/bookings/<booking_id>/cancel', methods=['POST', 'DELETE'])
+def cancel_farmer_booking_route(booking_id):
+    data = request.get_json(silent=True) or {}
+    farmer_phone = data.get('farmer_phone') or request.args.get('phone')
+
+    success, message = cancel_farmer_booking(booking_id, farmer_phone)
+    if success:
+        return jsonify({"success": True, "message": message})
+    else:
+        return jsonify({"success": False, "error": message}), 400
 
 
 # 6. Live Queue State
@@ -700,15 +750,46 @@ def track_farmer():
     phone = request.args.get('phone', '').strip()
     token = request.args.get('token', '').strip()
 
+    def augment_booking(b):
+        if not b or not isinstance(b, dict):
+            return b
+        c_id = b.get('centre_id')
+        status = b.get('booking_status')
+        if c_id and status in ('checked_in', 'called'):
+            try:
+                lq = get_live_queue_for_centre(c_id)
+                live_list = lq.get('live_queue', [])
+                pos = 1
+                found = False
+                for item in live_list:
+                    if item.get('id') == b.get('id') or item.get('token_number') == b.get('token_number'):
+                        found = True
+                        break
+                    pos += 1
+                if found:
+                    b['queue_position'] = pos
+                    b['estimated_wait_minutes'] = max(0, (pos - 1) * 10)
+                else:
+                    b['queue_position'] = 1
+                    b['estimated_wait_minutes'] = 5
+            except Exception as ex:
+                print(f"[TRACK QUEUE AUGMENT ERROR] {ex}")
+        elif status == 'called':
+            b['queue_position'] = 1
+            b['estimated_wait_minutes'] = 0
+        return b
+
     if token:
         booking = get_farmer_bookings(token=token)
         if not booking:
             return jsonify({"success": False, "error": "Token not found"}), 404
+        booking = augment_booking(booking)
         return jsonify({"success": True, "booking": booking})
 
     elif phone:
         bookings = get_farmer_bookings(phone=phone)
-        return jsonify({"success": True, "bookings": bookings})
+        augmented = [augment_booking(b) for b in (bookings or [])]
+        return jsonify({"success": True, "bookings": augmented})
 
     return jsonify({"success": False, "error": "Phone or Token is required"}), 400
 
@@ -717,7 +798,9 @@ def track_farmer():
 @app.route('/api/sms/logs', methods=['GET'])
 def get_sms_logs():
     phone = request.args.get('phone', '').strip()
-    logs = db_get_sms_logs(phone=phone if phone else None)
+    if not phone:
+        return jsonify({"success": True, "logs": []})
+    logs = db_get_sms_logs(phone=phone)
     return jsonify({"success": True, "logs": logs})
 
 

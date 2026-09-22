@@ -8,9 +8,15 @@
 {% endblock %}
 
 {% block nav_links %}
-<a href="/" class="btn-nav-link inactive" data-i18n="nav_home">🏠 Home</a>
-<span class="btn-nav-link active" data-i18n="nav_admin_dashboard">🏢 Admin Dashboard</span>
-<a href="/admin/login" class="btn-nav-logout" onclick="logoutAdmin(event)" data-i18n="nav_logout">🚪 Logout</a>
+<a href="/admin/login" class="btn-nav-logout" onclick="logoutAdmin(event)" data-i18n="nav_logout">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="logout-icon">
+    <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path>
+    <polyline points="7 16 3 12 7 8"></polyline>
+    <line x1="3" y1="12" x2="15" y2="12"></line>
+  </svg>
+  <span>Logout</span>
+</a>
 {% endblock %}
 
 {% block content %}
@@ -24,14 +30,17 @@
         <div>
           <div class="farmer-name-display" id="admin-display-name">Centre Operator Dashboard</div>
           <div class="farmer-kisan-id" id="admin-role-badge">Role: Loading...</div>
-          <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem;" id="admin-centre-display"></div>
+          <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem;" id="admin-centre-display">
+          </div>
         </div>
       </div>
 
       <div class="dashboard-header-actions">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <label style="font-size: 0.82rem; color: rgba(255,255,255,0.6);">Active Mandi:</label>
-          <select id="admin-centre-select" class="form-control" style="background: #1e293b; color: white; border-color: #334155; width: auto; font-size: 0.82rem; padding: 0.4rem 0.75rem;" onchange="reloadAdminData()">
+          <select id="admin-centre-select" class="form-control"
+            style="background: #1e293b; color: white; border-color: #334155; width: auto; font-size: 0.82rem; padding: 0.4rem 0.75rem;"
+            onchange="reloadAdminData()">
             {% for c in centres %}
             <option value="{{ c.id }}" {% if loop.first %}selected{% endif %}>{{ c.name }}</option>
             {% endfor %}
@@ -106,7 +115,8 @@
     <!-- =========================================================== -->
     <div class="dashboard-panel active" id="admin-panel-operations">
       <div class="card" style="margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
           <div>
             <h3>Counter Desks & Live Operator Bays</h3>
             <p style="color: var(--text-muted); font-size: 0.85rem;">Active Mandi inspection lines and weighbridges</p>
@@ -157,7 +167,8 @@
     <!-- =========================================================== -->
     <div class="dashboard-panel" id="admin-panel-queue">
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
           <h3>Full Queue Management</h3>
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button class="btn btn-secondary btn-sm" onclick="reloadAdminData()">🔄 Refresh Queue</button>
@@ -200,7 +211,9 @@
                 Select a token from Queue Management tab
               </p>
             </div>
-            <div style="background: var(--primary-100); color: var(--primary-800); font-weight: 800; padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;" id="weigh-token-display">
+            <div
+              style="background: var(--primary-100); color: var(--primary-800); font-weight: 800; padding: 0.35rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;"
+              id="weigh-token-display">
               None Selected
             </div>
           </div>
@@ -222,18 +235,21 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
               <div class="form-group">
                 <label class="form-label">Gross Vehicle Weight (kg)</label>
-                <input type="number" id="weigh-gross-kg" class="form-control" placeholder="e.g. 5200" value="5200" required oninput="updateScaleDisplay()">
+                <input type="number" id="weigh-gross-kg" class="form-control" placeholder="e.g. 5200" value="5200"
+                  required oninput="updateScaleDisplay()">
               </div>
               <div class="form-group">
                 <label class="form-label">Tare / Empty Weight (kg)</label>
-                <input type="number" id="weigh-tare-kg" class="form-control" placeholder="e.g. 1200" value="1200" required oninput="updateScaleDisplay()">
+                <input type="number" id="weigh-tare-kg" class="form-control" placeholder="e.g. 1200" value="1200"
+                  required oninput="updateScaleDisplay()">
               </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
               <div class="form-group">
                 <label class="form-label">Moisture Content (%)</label>
-                <input type="number" id="weigh-moisture-pct" class="form-control" placeholder="e.g. 11.5" value="11.5" step="0.1" required>
+                <input type="number" id="weigh-moisture-pct" class="form-control" placeholder="e.g. 11.5" value="11.5"
+                  step="0.1" required>
               </div>
               <div class="form-group">
                 <label class="form-label">Quality Assessment Grade</label>
@@ -247,7 +263,8 @@
 
             <div class="form-group">
               <label class="form-label">Agronomist / Officer Remarks</label>
-              <input type="text" id="weigh-notes" class="form-control" value="Grain quality verified. High purity and optimal moisture.">
+              <input type="text" id="weigh-notes" class="form-control"
+                value="Grain quality verified. High purity and optimal moisture.">
             </div>
 
             <div class="calculation-summary-card">
@@ -281,11 +298,11 @@
 
         <!-- Right: Quick Token Selector -->
         <div class="card" style="padding: 1.25rem;">
-          <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 1rem; color: #0f172a;">🔍 Select Token for Weighment</h4>
+          <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 1rem; color: #0f172a;">🔍 Select Token for
+            Weighment</h4>
           <div class="form-group">
-            <input type="text" id="weigh-token-search" class="form-control"
-                   placeholder="Enter token e.g. DOCA-26-P001"
-                   style="margin-bottom: 0.75rem;">
+            <input type="text" id="weigh-token-search" class="form-control" placeholder="Enter token e.g. DOCA-26-P001"
+              style="margin-bottom: 0.75rem;">
           </div>
           <button class="btn btn-secondary" style="width:100%;" onclick="loadTokenForWeighment()">
             📋 Load Token Details
@@ -319,7 +336,8 @@
           </div>
         </div>
 
-        <div id="status-booking-info" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.25rem;">
+        <div id="status-booking-info"
+          style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.25rem;">
           <!-- Booking info shown here -->
         </div>
 
@@ -363,7 +381,8 @@
     <!-- =========================================================== -->
     <div class="dashboard-panel" id="admin-panel-settlements">
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
           <h3>Today's Completed Procurements & DBT Settlements</h3>
           <span style="font-size: 0.8rem; color: var(--text-muted);">Real-time PFMS Sync</span>
         </div>
@@ -394,19 +413,22 @@
       <div class="analytics-grid">
         <div class="chart-card">
           <div class="chart-card-title">📊 Procurement by Crop (Today)</div>
-          <div id="crop-chart-container" style="min-height: 200px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+          <div id="crop-chart-container"
+            style="min-height: 200px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
             <div id="crop-analytics-display"></div>
           </div>
         </div>
         <div class="chart-card">
           <div class="chart-card-title">💰 Payment Status Breakdown</div>
-          <div id="payment-chart-container" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+          <div id="payment-chart-container"
+            style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
             <div id="payment-analytics-display"></div>
           </div>
         </div>
         <div class="chart-card" style="grid-column: 1/-1;">
           <div class="chart-card-title">📈 System KPI Metrics</div>
-          <div id="kpi-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding-top: 0.75rem;">
+          <div id="kpi-display"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; padding-top: 0.75rem;">
             <!-- KPI cards populated by JS -->
           </div>
         </div>
@@ -418,6 +440,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
 {% endblock %}

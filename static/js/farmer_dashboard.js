@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function logoutFarmer(e) {
   e.preventDefault();
   localStorage.removeItem('smartprocure_farmer');
+  if (typeof SMSDrawer !== 'undefined' && SMSDrawer.checkVisibility) {
+    SMSDrawer.checkVisibility();
+  }
   window.location.href = '/farmer/login';
 }
 
@@ -129,11 +132,23 @@ async function loadSummaryStats() {
 
 // ─── Booking Form ───────────────────────────────────
 function initBookingForm() {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const today = `${year}-${month}-${day}`;
+
   const dateInput = document.getElementById('book-date-input');
   if (dateInput) {
-    dateInput.value = today;
     dateInput.min = today;
+    dateInput.value = today; // Automatically set to today's date
+    dateInput.addEventListener('change', function () {
+      if (this.value < today) {
+        this.value = today;
+        showToast('Cannot select a past date', 'warning');
+        loadSlots();
+      }
+    });
   }
 
   // Restore draft if saved
@@ -144,6 +159,24 @@ function initBookingForm() {
       if (draft.cropId && document.getElementById('book-crop-select')) document.getElementById('book-crop-select').value = draft.cropId;
       if (draft.qty && document.getElementById('book-qty-input')) document.getElementById('book-qty-input').value = draft.qty;
       if (draft.vehicle && document.getElementById('book-vehicle-input')) document.getElementById('book-vehicle-input').value = draft.vehicle;
+    }
+  } catch (e) { }
+
+  // Check for preselected centre from landing page map selection
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectId = urlParams.get('centre_id') ||
+      sessionStorage.getItem('smartprocure_preselect_centre') ||
+      localStorage.getItem('smartprocure_preselect_centre');
+
+    const centreSel = document.getElementById('book-centre-select');
+    if (preselectId && centreSel) {
+      const exists = Array.from(centreSel.options).some(o => o.value === preselectId);
+      if (exists) {
+        centreSel.value = preselectId;
+        sessionStorage.removeItem('smartprocure_preselect_centre');
+        localStorage.removeItem('smartprocure_preselect_centre');
+      }
     }
   } catch (e) { }
 
@@ -220,19 +253,21 @@ async function loadSlots() {
     }
 
     container.innerHTML = data.slots.map(slot => {
-      const isFull = slot.available === 0;
+      const isPast = slot.is_past || false;
+      const isFull = slot.available === 0 || isPast;
       const pct = slot.capacity > 0 ? Math.round((slot.booked / slot.capacity) * 100) : 0;
-      const pctColor = pct < 50 ? '#16a34a' : pct < 80 ? '#d97706' : '#ef4444';
+      const pctColor = isPast ? '#64748b' : pct < 50 ? '#16a34a' : pct < 80 ? '#d97706' : '#ef4444';
+      const statusText = isPast ? '⏰ PASSED' : (slot.available === 0 ? '🔴 FULL' : `${slot.available} left`);
       return `
         <div class="slot-item ${isFull ? 'disabled' : 'available'}"
              onclick="${isFull ? '' : `selectBookingSlot(this, '${slot.slot_label}')`}"
              style="${isFull ? 'opacity:0.45;cursor:not-allowed;' : 'cursor:pointer;'}">
           <div class="slot-time">${slot.slot_label}</div>
           <div class="slot-capacity" style="color:${pctColor};font-size:0.72rem;font-weight:700;">
-            ${isFull ? '🔴 FULL' : `${slot.available} left`}
+            ${statusText}
           </div>
           <div style="height:3px;background:#e2e8f0;border-radius:2px;margin-top:0.4rem;">
-            <div style="height:100%;width:${pct}%;background:${pctColor};border-radius:2px;transition:width 0.4s;"></div>
+            <div style="height:100%;width:${isPast ? 100 : pct}%;background:${pctColor};border-radius:2px;transition:width 0.4s;"></div>
           </div>
         </div>
       `;
@@ -361,14 +396,47 @@ async function loadMyBookings() {
           </div>
           ` : ''}
         </div>
-        <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
           <button class="btn btn-secondary btn-sm" onclick="quickTrack('${b.token_number}')">📍 Track</button>
-          ${b.booking_status === 'booked' ? `<button class="btn btn-primary btn-sm" onclick="checkInToken('${b.id}')">✅ Check-In at Mandi</button>` : ''}
+          ${b.booking_status === 'booked' ? `
+            <button class="btn btn-primary btn-sm" onclick="checkInToken('${b.id}')">✅ Check-In at Mandi</button>
+            <button class="btn btn-danger btn-sm" onclick="cancelBooking('${b.id}', '${b.token_number}')" style="background:#ef4444;color:white;border:none;border-radius:0.4rem;padding:0.4rem 0.75rem;font-size:0.75rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:0.3rem;">🗑️ Delete / Cancel</button>
+          ` : ''}
         </div>
       </div>
     `).join('');
   } catch (e) {
     console.warn('Bookings load error', e);
+  }
+}
+
+async function cancelBooking(bookingId, tokenNumber) {
+  const confirmed = confirm(`Are you sure you want to cancel booking token ${tokenNumber}? This will release your slot.`);
+  if (!confirmed) return;
+
+  try {
+    const phone = farmerSession ? farmerSession.phone : '';
+    const res = await fetch(`/api/bookings/${bookingId}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ farmer_phone: phone })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('🗑️ ' + data.message, 'success');
+      loadMyBookings();
+      loadSummaryStats();
+      loadSlots();
+      // If currently on track panel, refresh track view
+      const input = document.getElementById('track-token-input');
+      if (input && input.value.trim() === tokenNumber) {
+        trackToken();
+      }
+    } else {
+      showToast(data.error || 'Failed to cancel booking', 'error');
+    }
+  } catch (e) {
+    showToast('Error cancelling booking', 'error');
   }
 }
 
@@ -396,15 +464,20 @@ function quickTrack(token) {
 async function trackToken() {
   const input = document.getElementById('track-token-input');
   const token = input?.value.trim();
-  if (!token) return showToast('Please enter a token number', 'error');
-
   const container = document.getElementById('track-result-container');
+  if (!container) return;
+
+  if (!token) {
+    container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">🔍</span><div class="empty-state-title">Enter Token Number</div><div class="empty-state-desc">Enter your 10-digit token number above to track progress live.</div></div>';
+    return;
+  }
+
   container.innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;">⏳ Fetching status...</div>';
 
   try {
     const res = await fetch(`/api/farmer/track?token=${encodeURIComponent(token)}`);
     const data = await res.json();
-    if (!data.success) {
+    if (!data.success || !data.booking) {
       container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">❌</span><div class="empty-state-title">Token Not Found</div><div class="empty-state-desc">No booking found for token "${token}"</div></div>`;
       return;
     }
@@ -459,7 +532,7 @@ async function trackToken() {
         </div>
         ` : ''}
 
-        <div style="margin-top:1.25rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <div style="margin-top:1.25rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
           <button type="button" class="btn btn-secondary btn-sm" onclick="speakAnnouncement('टोकन नंबर ${b.token_number}, स्थिति: ${b.booking_status}')">
             🔊 स्थिति सुनें (Audio)
           </button>

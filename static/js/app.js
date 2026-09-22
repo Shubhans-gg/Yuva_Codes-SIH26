@@ -13,7 +13,7 @@ const I18N = {
     nav_dashboard: "👨‍🌾 My Dashboard",
     nav_admin_dashboard: "🏢 Admin Dashboard",
     nav_display: "📺 Live Queue",
-    nav_logout: "🚪 Logout",
+    nav_logout: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="logout-icon"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><polyline points="7 16 3 12 7 8"></polyline><line x1="3" y1="12" x2="15" y2="12"></line></svg> <span>Logout</span>`,
 
     lang_btn: "हिंदी",
     mob_nav_home: "Home",
@@ -35,7 +35,8 @@ const I18N = {
     msp_tag: "📊 Government Approved",
     msp_title: "2026-27 Minimum Support Prices (MSP)",
     msp_desc: "Officially notified MSP rates for Kharif & Rabi crops as per Cabinet Committee on Economic Affairs (CCEA)",
-    per_quintal: "per Quintal (100 kg)",
+    btn_show_all_crops: "Show All",
+    btn_show_less_crops: "Show Less",
 
     // Mandi Finder Section
     finder_tag: "📍 Find Nearby",
@@ -45,6 +46,16 @@ const I18N = {
     search_placeholder: "Enter city, district or pincode... e.g. Karnal, Ludhiana",
     btn_use_location: "📍 Use My Location",
     btn_search: "🔍 Search",
+
+    // Track Progress Section
+    track_tag: "📍 LIVE QUEUE STATUS",
+    track_title: "Track Procurement & Queue Progress",
+    track_desc: "Enter your Token Number (e.g. DOCA-26-P001) to check real-time status and live wait time without logging in.",
+    track_input_label: "Token Number",
+    track_input_placeholder: "e.g. DOCA-26-P001",
+    track_btn_search: "🔍 Track Progress",
+    track_empty_title: "Check Your Mandi Queue Status Live",
+    track_empty_desc: "Enter your digital token number above to see real-time progress through all stages.",
 
     // How It Works Section
     how_tag: "⚡ Simple 6-Step Process",
@@ -122,7 +133,7 @@ const I18N = {
     nav_dashboard: "👨‍🌾 मेरा डैशबोर्ड",
     nav_admin_dashboard: "🏢 एडमिन डैशबोर्ड",
     nav_display: "📺 लाइव कतार",
-    nav_logout: "🚪 लॉगआउट",
+    nav_logout: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="logout-icon"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"></path><polyline points="7 16 3 12 7 8"></polyline><line x1="3" y1="12" x2="15" y2="12"></line></svg> <span>लॉगआउट</span>`,
 
     lang_btn: "English",
     mob_nav_home: "मुख्य",
@@ -144,7 +155,8 @@ const I18N = {
     msp_tag: "📊 सरकार द्वारा स्वीकृत",
     msp_title: "2026-27 न्यूनतम समर्थन मूल्य (MSP)",
     msp_desc: "आर्थिक मामलों की कैबिनेट समिति (CCEA) द्वारा अधिसूचित आधिकारिक फसल दरें",
-    per_quintal: "प्रति क्विंटल (100 किग्रा)",
+    btn_show_all_crops: "सभी दिखाएं",
+    btn_show_less_crops: "कम दिखाएं",
 
     // Mandi Finder Section
     finder_tag: "📍 नजदीकी केंद्र ढूंढें",
@@ -154,6 +166,16 @@ const I18N = {
     search_placeholder: "शहर, जिला या पिनकोड दर्ज करें... जैसे करनाल, लुधियाना",
     btn_use_location: "📍 मेरा स्थान प्रयोग करें",
     btn_search: "🔍 खोजें",
+
+    // Track Progress Section (Hindi)
+    track_tag: "📍 लाइव कतार स्थिति",
+    track_title: "खरीद और कतार स्थिति ट्रैक करें",
+    track_desc: "बिना लॉगिन किए अपनी वास्तविक समय स्थिति और प्रतीक्षा समय जांचने के लिए अपना टोकन नंबर (उदा. DOCA-26-P001) दर्ज करें।",
+    track_input_label: "टोकन नंबर दर्ज करें",
+    track_input_placeholder: "उदा. DOCA-26-P001",
+    track_btn_search: "🔍 स्थिति देखें",
+    track_empty_title: "अपनी मंडी कतार स्थिति लाइव जांचें",
+    track_empty_desc: "सभी चरणों में वास्तविक समय की प्रगति देखने के लिए ऊपर अपना डिजिटल टोकन नंबर दर्ज करें।",
 
     // How It Works Section (Hindi Vernacular - Easy for Farmer)
     how_tag: "⚡ सरल 6-चरण प्रक्रिया",
@@ -257,7 +279,7 @@ function setLanguage(lang) {
 
   try {
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
-  } catch(e) {}
+  } catch (e) { }
 }
 
 function toggleLanguage() {
@@ -353,7 +375,31 @@ function showToast(title, message, type = 'success') {
 const SMSDrawer = {
   unreadCount: 0,
 
+  checkVisibility() {
+    const btn = document.getElementById('floating-sms-btn');
+    const mobBtn = document.getElementById('mob-nav-sms');
+
+    // Never show SMS inbox buttons on the landing page
+    if (window.location.pathname === '/' || window.location.pathname === '') {
+      if (btn) btn.style.display = 'none';
+      if (mobBtn) mobBtn.style.display = 'none';
+      return false;
+    }
+
+    let activeFarmer = null;
+    try {
+      activeFarmer = JSON.parse(localStorage.getItem('smartprocure_farmer') || 'null');
+    } catch (e) { }
+
+    const isFarmerLoggedIn = !!(activeFarmer && activeFarmer.phone);
+    if (btn) btn.style.display = isFarmerLoggedIn ? 'flex' : 'none';
+    if (mobBtn) mobBtn.style.display = isFarmerLoggedIn ? 'flex' : 'none';
+    return isFarmerLoggedIn;
+  },
+
   init() {
+    this.checkVisibility();
+
     const btn = document.getElementById('floating-sms-btn');
     const backdrop = document.getElementById('sms-drawer-backdrop');
     const closeBtn = document.getElementById('sms-close-btn');
@@ -370,6 +416,7 @@ const SMSDrawer = {
   },
 
   open() {
+    if (!this.checkVisibility()) return;
     const backdrop = document.getElementById('sms-drawer-backdrop');
     if (backdrop) {
       backdrop.classList.add('active');
@@ -397,16 +444,33 @@ const SMSDrawer = {
   },
 
   async fetchLogs() {
+    const isLoggedIn = this.checkVisibility();
+    if (!isLoggedIn) {
+      this.renderLogs([]);
+      return;
+    }
+
     try {
-      const activeFarmer = JSON.parse(localStorage.getItem('smartprocure_farmer') || 'null');
-      const phoneParam = activeFarmer ? `?phone=${activeFarmer.phone}` : '';
-      const res = await fetch(`/api/sms/logs${phoneParam}`);
+      let activeFarmer = null;
+      try {
+        activeFarmer = JSON.parse(localStorage.getItem('smartprocure_farmer') || 'null');
+      } catch (e) { }
+
+      if (!activeFarmer || !activeFarmer.phone) {
+        this.renderLogs([]);
+        return;
+      }
+
+      const res = await fetch(`/api/sms/logs?phone=${encodeURIComponent(activeFarmer.phone)}`);
       const data = await res.json();
       if (data.success && data.logs) {
         this.renderLogs(data.logs);
+      } else {
+        this.renderLogs([]);
       }
     } catch (e) {
       console.warn("SMS log error:", e);
+      this.renderLogs([]);
     }
   },
 
